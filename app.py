@@ -18,7 +18,7 @@ db.init_app(app)
 create_db(app)
 
 form_structure = {
-    "اطلاعات شخصی": {
+    "اطلاعات هویتی": {
         "نام": "text",
         "نام خانوادگی": "text",
         "سن": "number",
@@ -28,7 +28,7 @@ form_structure = {
         "تسلط بر زبان‌ها": "text",
         "سابقه کاری": "text",
     },
-    "اطلاعات اضافی": {
+    "اطلاعات دسترسی": {
         "اطلاعات آدرس": ["ساکن تهران", "ساکن کرج", "ساکن شهرستان"],
         "سرویس‌هایی که می‌دهد": ["کودک", "سالمند", "امور تخصصی بیماران"],
         "سرویس‌های اضافه": ["نظافت منزل", "آشپزی", "مهمان داری", "کمک آموزشی", "خرید منزل"],
@@ -131,6 +131,7 @@ def submit_form():
             "تسلط بر زبان‌ها": "language_proficiency",
             "سابقه کاری": "work_experience",
             "اطلاعات آدرس": "address",
+            "country_name": "country_name",
             "سرویس‌هایی که می‌دهد": "services_offered",
             "سرویس‌های اضافه": "extra_services",
             "مدرک و گواهی‌نامه‌ها": "certifications",
@@ -146,15 +147,29 @@ def submit_form():
             "توضیحات": "comments",
         }
 
-        # Map the request form to model fields
-        form_data = {field_mapping[key]: value for key, value in request.form.items()}
+        # # Map the request form to model fields
+        # form_data = {field_mapping[key]: value for key, value in request.form.items() if key in field_mapping}
+
+        # Map the request form to model fields, handling empty strings
+        form_data = {
+            field_mapping[key]: (value if value.strip() else None)  # Convert empty strings to None
+            for key, value in request.form.items()
+            if key in field_mapping
+        }
 
         # Optional: If you want to handle the country_name (dynamic field)
         country_name = form_data.get('country_name', None)
         
-        # If the country_name field exists, add it to the form data
-        if country_name:
-            form_data['country_name'] = country_name
+        # Handle optional `country_name` dynamically
+        if 'country_name' not in form_data:
+            form_data['country_name'] = None  # Default value if not provided
+
+                # Convert specific fields to their expected types if needed
+        if 'salary' in form_data and form_data['salary'] is not None:
+            form_data['salary'] = float(form_data['salary'])  # Convert salary to float
+
+        if 'age' in form_data and form_data['age'] is not None:
+            form_data['age'] = int(form_data['age'])  # Convert age to int
 
         # Create a new FormData instance
         new_entry = FormData(**form_data)
@@ -171,9 +186,9 @@ def submit_form():
 
 
 def open_browser():
-    webbrowser.open_new("http://127.0.0.1:5000/")
+    webbrowser.open_new("http://127.0.0.1:2000/")
 
 if __name__ == "__main__":
     Timer(1, open_browser).start()  # Open the browser after 1 second
-    # app.run(debug=False, use_reloader=False, host="127.0.0.1", port=5000)
-    serve(app, host="0.0.0.0", port=5000)
+    app.run(debug=False, use_reloader=False, host="127.0.0.1", port=2000)
+    serve(app, host="0.0.0.0", port=2000)

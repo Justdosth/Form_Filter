@@ -1,16 +1,17 @@
 function toggleCountryField(selectElement) {
-    const textField = document.getElementById('country-details'); // Target the correct div
+    const countryDetails = document.getElementById('country-details');
+    const countryInput = document.getElementById('country-name');
+
     if (selectElement.value === 'ساکن شهرستان') {
-        textField.style.display = 'block'; // Show the field
-        const inputField = textField.querySelector('input');
-        inputField.required = true; // Make the input field required
+        countryDetails.style.display = 'block';
+        countryInput.required = true; // Make it required when visible
     } else {
-        textField.style.display = 'none'; // Hide the field
-        const inputField = textField.querySelector('input');
-        inputField.required = false; // Remove required
-        inputField.value = ''; // Clear the value
+        countryDetails.style.display = 'none';
+        countryInput.required = false; // Remove required if hidden
+        countryInput.value = ''; // Clear the value when hidden
     }
 }
+
 
 function validateForm(event) {
     let isValid = true;
@@ -33,7 +34,7 @@ function validateForm(event) {
             errorElement.style.display = "block"; // Show error message
             inputElement.classList.add("error"); // Highlight field
             isValid = false; // Mark form as invalid
-            
+
             // Store the first invalid element
             if (!firstInvalidElement) {
                 firstInvalidElement = inputElement;

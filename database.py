@@ -4,35 +4,29 @@ db = SQLAlchemy()
 
 class FormData(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    
-    # Information about the person
     name = db.Column(db.String(100), nullable=False)
     last_name = db.Column(db.String(100), nullable=False)
-    age = db.Column(db.Integer)
-    gender = db.Column(db.String(10))
-    marital_status = db.Column(db.String(10))
-    salary = db.Column(db.Float)
-    language_proficiency = db.Column(db.String(200))
-    work_experience = db.Column(db.String(500))
-
-    # Additional information
-    address = db.Column(db.String(100))
-    country_details = db.Column(db.String(255))
-    services_offered = db.Column(db.String(200))
-    extra_services = db.Column(db.String(200))
-    certifications = db.Column(db.String(200))
-    other_documents = db.Column(db.String(500))
-    limitations = db.Column(db.String(200))
-
-    # Service Preferences
-    preferred_areas = db.Column(db.String(200))
-    preferred_shifts = db.Column(db.String(100))
-    holiday_work = db.Column(db.String(10))
-    separate_zone = db.Column(db.String(100))
-    need_helper = db.Column(db.String(10))
-    bring_accompanying = db.Column(db.String(100))
-    patient_accompanying_at_home = db.Column(db.String(10))
-    comments = db.Column(db.Text)
+    age = db.Column(db.Integer, nullable=True)
+    gender = db.Column(db.String(10), nullable=True)
+    marital_status = db.Column(db.String(10), nullable=True)
+    salary = db.Column(db.Float, nullable=True)
+    language_proficiency = db.Column(db.String(200), nullable=True)
+    work_experience = db.Column(db.String(500), nullable=True)
+    address = db.Column(db.String(100), nullable=True)
+    country_name = db.Column(db.String(255), nullable=True)
+    services_offered = db.Column(db.String(200), nullable=True)
+    extra_services = db.Column(db.String(200), nullable=True)
+    certifications = db.Column(db.String(200), nullable=True)
+    other_documents = db.Column(db.String(500), nullable=True)
+    limitations = db.Column(db.String(200), nullable=True)
+    preferred_areas = db.Column(db.String(200), nullable=True)
+    preferred_shifts = db.Column(db.String(100), nullable=True)
+    holiday_work = db.Column(db.String(10), nullable=True)
+    separate_zone = db.Column(db.String(100), nullable=True)
+    need_helper = db.Column(db.String(10), nullable=True)
+    bring_accompanying = db.Column(db.String(100), nullable=True)
+    patient_accompanying_at_home = db.Column(db.String(10), nullable=True)
+    comments = db.Column(db.Text, nullable=True)
 
     def __repr__(self):
         return f'<FormData {self.name} {self.last_name}>'

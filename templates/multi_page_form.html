@@ -19,7 +19,7 @@
                         <div class="form-column">
                             <label for="{{ field }}">
                                 {{ field }}
-                                {% if page == "اطلاعات شخصی" and field in ["نام", "نام خانوادگی", "جنس", "وضعیت تاهل"] %}
+                                {% if (page == "اطلاعات هویتی" or page == "اطلاعات دسترسی") and field in ["نام", "نام خانوادگی", "جنس", "وضعیت تاهل", "اطلاعات آدرس"] %}
                                     <span class="required">*</span>
                                 {% endif %}
                             </label>
