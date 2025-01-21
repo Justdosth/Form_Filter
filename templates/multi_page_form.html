@@ -24,9 +24,6 @@
                                 {% endif %}
                             </label>
 
-                            <!-- Error message container -->
-                            <div class="error-message" id="{{ field }}-error"></div>
-
                             {% if options == "text" %}
                                 <input type="text" id="{{ field }}" name="{{ field }}">
                             {% elif options == "number" %}
@@ -35,25 +32,25 @@
                                 <textarea id="{{ field }}" name="{{ field }}"></textarea>
                             {% else %}
                                 <select id="{{ field }}" name="{{ field }}"
-                                    {% if page == "اطلاعات شخصی" and field in ["جنس", "وضعیت تاهل"] %}
-                                        required
-                                    {% endif %}
-                                    {% if field == "اطلاعات آدرس" %}
-                                        onchange="toggleCountryField(this)"
-                                    {% endif %}>
+                                    {% if page == "اطلاعات شخصی" and field in ["جنس", "وضعیت تاهل"] %} required {% endif %}
+                                    {% if field == "اطلاعات آدرس" %} onchange="toggleCountryField(this)" {% endif %}>
                                     <option value="" disabled selected>انتخاب کنید</option>
                                     {% for option in options %}
                                         <option value="{{ option }}">{{ option }}</option>
                                     {% endfor %}
                                 </select>
-                                <div class="error-message" id="{{ field }}-error"></div>
+
+                                <!-- Toggle field for "اطلاعات آدرس" -->
                                 {% if field == "اطلاعات آدرس" %}
                                     <div id="country-details" style="display: none;">
                                         <label for="country-name">نام شهرستان:</label>
-                                        <input type="text" id="country-name">
+                                        <input type="text" id="country-name" name="country_name">
                                     </div>
                                 {% endif %}
                             {% endif %}
+
+                            <!-- Error message container below each field -->
+                            <div class="error-message" id="{{ field }}-error"></div>
                         </div>
                     {% endfor %}
                 </div>
