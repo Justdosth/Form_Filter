@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>فرم ثبت اطلاعات</title>
+    <link rel="stylesheet" href="static/css/styles.css">
+    <script src="static/js/form-submit.js" defer></script>
+    <script src="static/js/form-logic.js" defer></script>
+</head>
+<body>
+    <h1>فرم ثبت اطلاعات</h1>
+    <div class="form-container">
+        <form action="submit-form" method="POST" onsubmit="validateForm(event)">
+            {% for page, fields in form_structure.items() %}
+                <h2>{{ page }}</h2>
+                <div class="form-row">
+                    {% for field, options in fields.items() %}
+                        <div class="form-column">
+                            <label for="{{ field }}">
+                                {{ field }}
+                                {% if page == "اطلاعات شخصی" and field in ["نام", "نام خانوادگی", "جنس", "وضعیت تاهل"] %}
+                                    <span class="required">*</span>
+                                {% endif %}
+                            </label>
+
+                            <!-- Error message container -->
+                            <div class="error-message" id="{{ field }}-error"></div>
+
+                            {% if options == "text" %}
+                                <input type="text" id="{{ field }}" name="{{ field }}">
+                            {% elif options == "number" %}
+                                <input type="number" id="{{ field }}" name="{{ field }}">
+                            {% elif options == "textarea" %}
+                                <textarea id="{{ field }}" name="{{ field }}"></textarea>
+                            {% else %}
+                                <select id="{{ field }}" name="{{ field }}"
+                                    {% if page == "اطلاعات شخصی" and field in ["جنس", "وضعیت تاهل"] %}
+                                        required
+                                    {% endif %}
+                                    {% if field == "اطلاعات آدرس" %}
+                                        onchange="toggleCountryField(this)"
+                                    {% endif %}>
+                                    <option value="" disabled selected>انتخاب کنید</option>
+                                    {% for option in options %}
+                                        <option value="{{ option }}">{{ option }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="error-message" id="{{ field }}-error"></div>
+                                {% if field == "اطلاعات آدرس" %}
+                                    <div id="country-details" style="display: none;">
+                                        <label for="country-name">نام شهرستان:</label>
+                                        <input type="text" id="country-name">
+                                    </div>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+                <hr>
+            {% endfor %}
+            <button type="submit">ارسال</button>
+            <a href="{{ url_for('view_data') }}" class="view-data-btn">
+                <button type="button">مشاهده داده‌ها</button>
+            </a>
+        </form>        
+    </div>
+    <footer>&copy; 2024 - سیستم ثبت اطلاعات</footer>
+</body>
+</html>

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Multi-Page Form</title>
+</head>
+<body>
+    <h1>Fill Out the Form</h1>
+    <form method="POST">
+        {% for page, fields in pages.items() %}
+            <h2>{{ page }}</h2>
+            {% for field in fields %}
+                <label for="{{ field }}">{{ field }}</label><br>
+                <input type="text" id="{{ field }}" name="{{ field }}"><br><br>
+            {% endfor %}
+            <hr>
+        {% endfor %}
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>

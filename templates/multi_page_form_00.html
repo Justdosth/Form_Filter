@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>فرم ثبت اطلاعات</title>
+    <link rel="stylesheet" href="static/css/styles.css">
+    <script>
+        function toggleTextField(selectId, targetId) {
+            const selectField = document.getElementById(selectId);
+            const textField = document.getElementById(targetId);
+            if (selectField.value === "ساکن شهرستان") {
+                textField.style.display = "block";
+            } else {
+                textField.style.display = "none";
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>فرم ثبت اطلاعات</h1>
+    <div class="form-container">
+        <form method="POST">
+            {% for page, fields in form_structure.items() %}
+                <h2>{{ page }}</h2>
+                <div class="form-row">
+                    {% for field, options in fields.items() %}
+                        <div class="form-column">
+                            <label for="{{ field }}">{{ field }}</label>
+                            {% if options == "text" %}
+                                <input type="text" id="{{ field }}" name="{{ field }}">
+                            {% elif options == "number" %}
+                                <input type="number" id="{{ field }}" name="{{ field }}">
+                            {% elif options == "textarea" %}
+                                <textarea id="{{ field }}" name="{{ field }}"></textarea>
+                            {% else %}
+                                <select 
+                                    id="{{ field }}" 
+                                    name="{{ field }}" 
+                                    {% if field == "اطلاعات آدرس" %} 
+                                        onchange="toggleTextField('{{ field }}', 'other_city')"
+                                    {% endif %}
+                                >
+                                    {% for option in options %}
+                                        <option value="{{ option }}">{{ option }}</option>
+                                    {% endfor %}
+                                </select>
+                                {% if field == "اطلاعات آدرس" %}
+                                    <input 
+                                        type="text" 
+                                        id="other_city" 
+                                        name="other_city" 
+                                        class="hidden-field" 
+                                        placeholder="لطفا نام شهر را وارد کنید"
+                                    >
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+                <hr>
+            {% endfor %}
+            <button type="submit">ارسال</button>
+        </form>
+    </div>
+    <footer>&copy; 2024 - سیستم ثبت اطلاعات</footer>
+</body>
+</html>

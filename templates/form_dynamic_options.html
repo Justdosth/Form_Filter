@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dynamic Form with Options</title>
+</head>
+<body>
+    <h1>Fill Out the Form</h1>
+    <form method="POST">
+        {% for field, options in fields.items() %}
+            <label for="{{ field }}">{{ field }}</label><br>
+            {% if options %}
+                <select id="{{ field }}" name="{{ field }}">
+                    {% for option in options %}
+                        <option value="{{ option }}">{{ option }}</option>
+                    {% endfor %}
+                </select>
+            {% else %}
+                <input type="text" id="{{ field }}" name="{{ field }}"><br>
+            {% endif %}
+            <br><br>
+        {% endfor %}
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>
