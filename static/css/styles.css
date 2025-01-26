@@ -73,6 +73,7 @@ label {
 
 input[type="text"],
 input[type="number"],
+input[type="date"],
 select,
 textarea {
     font-family: "IRANSans", Arial, sans-serif;
