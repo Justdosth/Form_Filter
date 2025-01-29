@@ -4,13 +4,26 @@ db = SQLAlchemy()
 
 class FormData(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+
     name = db.Column(db.String(100), nullable=False)
     last_name = db.Column(db.String(100), nullable=False)
+
+    national_code = db.Column(db.String(50), nullable=False)
+
+    birth_date = db.Column(db.Date, nullable=True)
     age = db.Column(db.Integer, nullable=True)
+
     gender = db.Column(db.String(10), nullable=True)
     marital_status = db.Column(db.String(10), nullable=True)
+
     salary = db.Column(db.Float, nullable=True)
+
     language_proficiency = db.Column(db.String(200), nullable=True)
+
+    companion = db.Column(db.Boolean, nullable=True)
+
+
+    
     work_experience = db.Column(db.String(500), nullable=True)
     address = db.Column(db.String(100), nullable=True)
     country_name = db.Column(db.String(255), nullable=True)

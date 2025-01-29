@@ -21,13 +21,15 @@ form_structure = {
     "اطلاعات هویتی": {
         "نام": "text",
         "نام خانوادگی": "text",
-        "سن": "number",
-        "جنس": ["مرد", "زن"],
+        "کد ملی": "text",
+        "تاریخ تولد": "date",
+        "جنسیت": ["مرد", "زن"],
         "وضعیت تاهل": ["مجرد", "متاهل"],
-        "حقوق مورد نظر": "number",
         "تسلط بر زبان‌ها": "text",
-        "سابقه کاری": "text",
+        "آیا شخصی را دارید که نیاز به مراقبت ویژه دارد و باید با شما همراه باشد؟ اگر بله توضیح دهید.": ["بله", "خیر"]
     },
+
+
     "اطلاعات دسترسی": {
         "اطلاعات آدرس": ["ساکن تهران", "ساکن کرج", "ساکن شهرستان"],
         "سرویس‌هایی که می‌دهد": ["کودک", "سالمند", "امور تخصصی بیماران"],
@@ -63,7 +65,8 @@ def form():
         form_data = FormData(
             name=request.form['نام'],
             last_name=request.form['نام خانوادگی'],
-            age=request.form.get('سن', type=int),
+            national_code=request.form['کد ملی'],
+            birth_date=request.form.get('سن', type=date),
             gender=request.form.get('جنس'),
             marital_status=request.form.get('وضعیت تاهل'),
             salary=request.form.get('حقوق مورد نظر', type=float),
@@ -127,11 +130,11 @@ def submit_form():
             "سن": "age",
             "جنس": "gender",
             "وضعیت تاهل": "marital_status",
-            "حقوق مورد نظر": "salary",
+            "کد ملی": "national_code",
             "تسلط بر زبان‌ها": "language_proficiency",
             "سابقه کاری": "work_experience",
             "اطلاعات آدرس": "address",
-            "country_name": "country_name",
+            "شهرستان": "country_name",
             "سرویس‌هایی که می‌دهد": "services_offered",
             "سرویس‌های اضافه": "extra_services",
             "مدرک و گواهی‌نامه‌ها": "certifications",
