@@ -66,7 +66,7 @@ def form():
             name=request.form['نام'],
             last_name=request.form['نام خانوادگی'],
             national_code=request.form['کد ملی'],
-            birth_date=request.form.get('سن', type=date),
+            birth_date=request.form.get('سن'),
             gender=request.form.get('جنس'),
             marital_status=request.form.get('وضعیت تاهل'),
             salary=request.form.get('حقوق مورد نظر', type=float),

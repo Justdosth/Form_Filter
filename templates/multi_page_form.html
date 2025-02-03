@@ -5,11 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>فرم ثبت اطلاعات</title>
 
+    <!-- jQuery (Required) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- Persian Datepicker CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
-    <!-- Persian Datepicker JS -->
-    <script src="https://unpkg.com/persian-date@1.1.0/dist/persian-date.min.js"></script>
+
 
     <link rel="stylesheet" href="static/css/styles.css">
     <script src="static/js/form-submit.js" defer></script>
@@ -36,7 +34,7 @@
                             {% elif options == "number" %}
                                 <input type="number" id="{{ field }}" name="{{ field }}">
                             {% elif options == "date" %}
-                                <input type="text" id="{{ field }}" name="{{ field }}" required>
+                                <input type="text" id="{{ field }}" name="{{ field }}" class="datepicker" required>
                             {% elif options == "textarea" %}
                                 <textarea id="{{ field }}" name="{{ field }}"></textarea>
                             {% elif options is mapping or options is sequence %}
