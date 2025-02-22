@@ -54,13 +54,6 @@ function validateForm(event) {
         event.preventDefault();
     }
 }
-
-document.addEventListener("DOMContentLoaded", function () {
-    const datePicker = document.getElementById('تاریخ تولد');
-    console.log(datePicker)
-    $(datePicker).persianDatepicker({
-        format: 'YYYY/MM/DD',
-        observer: true,
-        initialValueType: 'persian',
-    });
-});
+    
+  
+  

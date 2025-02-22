@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, jsonify
-from database import db, FormData, create_db  # Import database and models
+from database_old import db, FormData, create_db  # Import database and models
 from threading import Timer
 from waitress import serve
 import webbrowser
@@ -192,6 +192,4 @@ def open_browser():
     webbrowser.open_new("http://127.0.0.1:2000/")
 
 if __name__ == "__main__":
-    Timer(1, open_browser).start()  # Open the browser after 1 second
-    app.run(debug=False, use_reloader=False, host="127.0.0.1", port=2000)
-    serve(app, host="0.0.0.0", port=2000)
+    app.run(debug=False, host="127.0.0.1", port=2000)

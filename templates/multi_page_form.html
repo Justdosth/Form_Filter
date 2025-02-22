@@ -6,12 +6,16 @@
     <title>فرم ثبت اطلاعات</title>
 
     <!-- jQuery (Required) -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="/static/js/jquery-3.6.0.min.js"></script>
+
+    <link rel="stylesheet" href="/static/css/persian-datepicker.min.css">
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <!-- Add Persian calendar links -->
+    <script src="/static/js/persian-date.min.js"></script>
+    <script src="/static/js/persian-datepicker.min.js"></script>
+    
 
 
-    <link rel="stylesheet" href="static/css/styles.css">
-    <script src="static/js/form-submit.js" defer></script>
-    <script src="static/js/form-logic.js" defer></script>
 </head>
 <body>
     <h1>فرم ثبت اطلاعات</h1>
@@ -70,5 +74,25 @@
         </form>        
     </div>
     <footer>&copy; 2025 - سیستم ثبت اطلاعات</footer>
+    <script>
+        $(document).ready(function() {
+          // Initialize the Persian Datepicker
+          $('.datepicker').persianDatepicker({
+            format: 'YYYY/MM/DD',
+            altFormat: 'YYYY/MM/DD',
+            calendar: { persian: true },
+            autoClose: true, // Automatically close after date selection
+            onSelect: function(date) {
+              console.log("Date selected: " + date);
+            }
+          });
+    
+          console.log("Persian Datepicker initialized!");
+        });
+    </script>
+
+    <script src="/static/js/form-submit.js" defer></script>
+    <script src="/static/js/form-logic.js" defer></script>
 </body>
+
 </html>
