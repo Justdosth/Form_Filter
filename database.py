@@ -1,5 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.types import JSON
+from sqlalchemy import inspect
+from collections import defaultdict
 
 db = SQLAlchemy()
 
@@ -99,3 +101,171 @@ class WorkExperience(db.Model):
 def create_db(app):
     with app.app_context():
         db.create_all()
+
+
+# Pre-defined lists for services, limitations, extra services, and equipment experience (can be fetched from DB or config)
+# سرویس‌های قابل ارائه
+SERVICES_LIST = [
+    "امور نظافتی",
+    "مراقبت از کودکان",
+    "مراقبت از سالمندان",
+    "مراقبت از بیماران",
+    "مراقبت از معلولین"
+]
+
+# محدودیت‌ها
+LIMITATIONS_LIST = [
+    "پت",
+    "محدودیت جسمی",
+    "سفر خارج از شهر",
+    "سفر خارج از کشور",
+    "اقامت در محل",
+    "تعطیل‌کاری",
+    "اضافه‌کاری",
+    "خدمت به آقا",
+    "خدمت به خانم",
+    "متراژ منزل",
+    "نوع منزل",
+    "حضور بستگان در منزل"
+]
+
+# سایر خدمات
+EXTRA_SERVICES_LIST = [
+    "نظافت منزل",
+    "آشپزی",
+    "مهمانداری",
+    "امور آموزشی",
+    "امور باغبانی",
+    "خرید منزل",
+    "تعمیرات",
+    "کمک به بیماران خاص یا توانبخشی",
+    "جابجایی افراد در منزل",
+    "دادن دارو طبق تجویز پزشک",
+    "انجام امور اداری خارج از منزل",
+    "خدمات مربوط به پت",
+    "همراهی خارج از منزل (مدرسه، پارک، مراکز درمانی و ...)"
+]
+
+# توانایی کار با تجهیزات
+EQUIPMENT_EXPERIENCE_LIST = [
+    "فشارسنج",
+    "تب سنج",
+    "دستگاه تست قندخون",
+    "اکسی‌متر",
+    "ساکشن",
+    "سوند",
+    "تب کولستومی",
+    "دستگاه نوار قلب",
+    "ویلچر",
+    "بالابرهای بیمار",
+    "تکنولوژی (گوشی هوشمند، دوربین، کامپیوتر و ...)"
+]
+
+COLUMN_LABELS = {
+    "full_name": "نام و نام خانوادگی",
+    "birth_date": "تاریخ تولد",
+    "national_code": "کد ملی",
+    "language_proficiency": "مهارت‌های زبانی",
+    "gender": "جنسیت",
+    "marital_status": "وضعیت تأهل",
+    "special_care_companion": "نیاز به همراه مراقبتی خاص",
+    "companion_details": "جزئیات همراه",
+    "emergency_contact": "شماره تماس اضطراری",
+    "landline": "تلفن ثابت",
+    "mobile": "تلفن همراه",
+    "residence_address": "آدرس محل سکونت",
+    "services_offered": "سرویس‌های قابل ارائه",
+    "extra_services": "خدمات اضافی",
+    "driving_capability": "توانایی رانندگی",
+    "vehicle_details": "جزئیات وسیله نقلیه",
+    "limitations": "محدودیت‌ها",
+    "home_size_restriction": "محدودیت متراژ خانه",
+    "home_type_restriction": "نوع منزل",
+    "relatives_presence": "حضور بستگان در منزل",
+    "preferred_shifts": "شیفت‌های کاری",
+    "equipment_experience": "توانایی کار با تجهیزات",
+    "desired_job": "شغل مورد نظر",
+    "interviewer_comments": "توضیحات مصاحبه",
+}
+
+
+def generate_form_structure():
+    form_structure = defaultdict(dict)
+
+    inspector = inspect(FormData)
+    columns = inspector.columns  
+
+    for column_name, column in columns.items():
+        persian_label = COLUMN_LABELS.get(column_name, column_name)  # Get Persian label, default to column name
+        
+        if column_name in ['full_name', 'national_code', 'language_proficiency']:
+            field_type = 'text'
+            form_structure["اطلاعات هویتی"][persian_label] = field_type
+
+        elif column_name in ['birth_date']:
+            field_type = 'date'
+            form_structure["اطلاعات هویتی"][persian_label] = field_type
+
+        elif column_name in ['gender', 'marital_status']:
+            field_type = 'select'
+            form_structure["اطلاعات هویتی"][persian_label] = field_type
+            if column_name == "gender":
+                form_structure["اطلاعات هویتی"][persian_label + "_options"] = ["خانم", "آقا"]
+            elif column_name == "marital_status":
+                form_structure["اطلاعات هویتی"][persian_label + "_options"] = ["مجرد", "متاهل"]
+
+        elif column_name in ['special_care_companion']:
+            field_type = 'select'
+            form_structure["اطلاعات هویتی"][persian_label] = field_type
+            form_structure["اطلاعات هویتی"][persian_label + "_options"] = ["بله", "خیر"]
+
+        elif column_name in ['companion_details', 'residence_address']:
+            field_type = 'textarea'
+            form_structure["اطلاعات هویتی"][persian_label] = field_type
+
+        elif column_name in ['emergency_contact', 'mobile', 'landline']:
+            field_type = 'text'
+            form_structure["اطلاعات دسترسی"][persian_label] = field_type
+
+        elif column_name in ['services_offered']:
+            field_type = 'checkboxes'
+            form_structure["سرویس‌های قابل ارائه"][persian_label] = field_type
+            form_structure["سرویس‌های قابل ارائه"][persian_label + "_options"] = SERVICES_LIST
+
+        elif column_name in ['extra_services']:
+            field_type = 'checkboxes'
+            form_structure["سایر خدمات"][persian_label] = field_type
+            form_structure["سایر خدمات"][persian_label + "_options"] = EXTRA_SERVICES_LIST
+
+        elif column_name in ['driving_capability']:
+            field_type = 'select'
+            form_structure["سرویس‌های قابل ارائه"][persian_label] = field_type
+            form_structure["سرویس‌های قابل ارائه"][persian_label + "_options"] = ["بله", "خیر"]
+
+        elif column_name in ['vehicle_details']:
+            field_type = 'textarea'
+            form_structure["سرویس‌های قابل ارائه"][persian_label] = field_type
+
+        elif column_name in ['limitations']:
+            field_type = 'checkboxes'
+            form_structure["محدودیت‌ها"][persian_label] = field_type
+            form_structure["محدودیت‌ها"][persian_label + "_options"] = LIMITATIONS_LIST
+
+        elif column_name in ['home_size_restriction', 'home_type_restriction', 'relatives_presence']:
+            field_type = 'textarea'
+            form_structure["محدودیت‌ها"][persian_label] = field_type
+
+        elif column_name in ['preferred_shifts']:
+            field_type = 'text'
+            form_structure["شیفت‌های کاری"][persian_label] = field_type
+
+        elif column_name in ['equipment_experience']:
+            field_type = 'checkboxes'
+            form_structure["توانایی کار با تجهیزات"][persian_label] = field_type
+            form_structure["توانایی کار با تجهیزات"][persian_label + "_options"] = EQUIPMENT_EXPERIENCE_LIST
+
+        elif column_name in ['desired_job', 'interviewer_comments']:
+            field_type = 'textarea'
+            form_structure["شغل مورد نظر و توضیحات مصاحبه"][persian_label] = field_type
+
+    return dict(form_structure)

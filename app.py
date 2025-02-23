@@ -1,11 +1,13 @@
 from flask import Flask, render_template, request, redirect, jsonify
-from database import db, FormData, create_db  # Import database and models
+from database import db, FormData, create_db, generate_form_structure  # Import database and models
 from threading import Timer
 from waitress import serve
+from flask_cors import CORS
 import webbrowser
 import sqlite3
 
 app = Flask(__name__)
+CORS(app)
 
 # Configure the database URI (use SQLite for simplicity)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///form_data.db'  # SQLite database file
@@ -17,47 +19,9 @@ db.init_app(app)
 # Create the database tables (if they don't exist yet)
 create_db(app)
 
-form_structure = {
-    "اطلاعات هویتی": {
-        "نام": "text",
-        "نام خانوادگی": "text",
-        "کد ملی": "text",
-        "تاریخ تولد": "date",
-        "جنسیت": ["مرد", "زن"],
-        "وضعیت تاهل": ["مجرد", "متاهل"],
-        "تسلط بر زبان‌ها": "text",
-        "آیا شخصی را دارید که نیاز به مراقبت ویژه دارد و باید با شما همراه باشد؟ اگر بله توضیح دهید.": ["بله", "خیر"]
-    },
-
-
-    "اطلاعات دسترسی": {
-        "اطلاعات آدرس": ["ساکن تهران", "ساکن کرج", "ساکن شهرستان"],
-        "سرویس‌هایی که می‌دهد": ["کودک", "سالمند", "امور تخصصی بیماران"],
-        "سرویس‌های اضافه": ["نظافت منزل", "آشپزی", "مهمان داری", "کمک آموزشی", "خرید منزل"],
-        "مدرک و گواهی‌نامه‌ها": [
-            "فاقد سواد", "زیر دیپلم", "دیپلم", "فوق دیپلم", "لیسانس", "فوق لیسانس", "دکتری"
-        ],
-        "سایر مدارک متفرقه": "text",
-        "محدودیت‌ها": [
-            "حیوان خانگی", "متراژ", "منزل قدیمی", "منزل نوساخت",
-            "توانایی سفر خارج شهر", "توانایی سفر خارج کشور",
-            "خدمت به خانم", "خدمت به آقا"
-        ],
-    },
-    "ترجیحات خدمات": {
-        "مناطق مورد نظر جهت خدمت‌دهی": "text",
-        "شیفت‌های مورد نظر": "text",
-        "تعطیل کاری": ["بله", "خیر"],
-        "محدوده جدا": "text",
-        "نیاز به نیروی کمکی": ["بله", "خیر"],
-        "آوردن همراه": "text",
-        "حضور همراه بیمار در منزل": ["بله", "خیر"],
-        "توضیحات": "textarea",
-    },
-}
-
 @app.route("/", methods=["GET", "POST"])
-def index():
+def home():
+    form_structure = generate_form_structure() 
     return render_template('multi_page_form.html', form_structure=form_structure)
 def form():
     if request.method == "POST":
