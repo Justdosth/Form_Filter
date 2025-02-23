@@ -23,55 +23,89 @@
         <form action="submit-form" method="POST" onsubmit="validateForm(event)">
             {% for section, fields in form_structure.items() %}
                 <h2>{{ section }}</h2>
-                <div class="form-row">
-                    {% for field, options in fields.items() %}
-                        <div class="form-column">
-                            <label for="{{ field }}">
-                                {{ field }}
-                                {% if (section == "اطلاعات هویتی" or section == "اطلاعات دسترسی") and field in [نام و نام خانوادگی", "کد ملی", "تاریخ تولد", "جنسیت", "وضعیت تاهل", "شماره موبایل"] %}
-                                    <span class="required">*</span>
-                                {% endif %}
-                            </label>
-
-                            {% if options == "text" %}
-                                <input type="text" id="{{ field }}" name="{{ field }}">
-                            {% elif options == "number" %}
-                                <input type="number" id="{{ field }}" name="{{ field }}">
-                            {% elif options == "date" %}
-                                <input type="text" id="{{ field }}" name="{{ field }}" class="datepicker" required>
-                            {% elif options == "textarea" %}
-                                <textarea id="{{ field }}" name="{{ field }}"></textarea>
-                            {% elif options is mapping or options is sequence %}
-                                <select id="{{ field }}" name="{{ field }}">
-                                    {% if section == "اطلاعات شخصی" and field in ["جنس", "وضعیت تاهل"] %} required {% endif %}
-                                    {% if field == "اطلاعات آدرس" %} onchange="toggleCountryField(this)" {% endif %}>
-                                    <option value="" disabled selected>انتخاب کنید</option>
-                                    {% for option in options %}
-                                        <option value="{{ option }}">{{ option }}</option>
-                                    {% endfor %}
-                                </select>
-
-                                <!-- Toggle field for "اطلاعات آدرس" -->
-                                {% if field == "اطلاعات آدرس" %}
-                                    <div id="country-details" style="display: none;">
-                                        <label for="country-name">نام شهرستان:</label>
-                                        <input type="text" id="country-name" name="country_name">
+        
+                <!-- Check if the section is one of the custom sections (آشنایان, مدارک, سوابق کاری) -->
+                {% if section in ["آشنایان", "مدارک", "سوابق کاری"] %}
+                    <table id="{{ section }}-table">
+                        <thead>
+                            <tr>
+                                {% for field, _ in fields[0].items() %}
+                                    <th>{{ field }}</th>
+                                {% endfor %}
+                                <th>عملیات</th> <!-- To add a delete button for each row -->
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Initial row, empty inputs to be filled by the user -->
+                            <tr>
+                                {% for field, _ in fields[0].items() %}
+                                    <td>
+                                        <input type="text" name="{{ section }}_{{ field }}[]" placeholder="Enter data">
+                                    </td>
+                                {% endfor %}
+                                <td><button type="button" class="delete-row-btn">حذف</button></td> <!-- Delete button -->
+                            </tr>
+                        </tbody>
+                    </table>
+                    <button type="button" class="add-row-btn" onclick="addRow('{{ section }}')">+</button>
+                {% else %}
+                    <!-- Regular form fields for other sections -->
+                    <div class="form-row">
+                        {% for field, options in fields.items() %}
+                            <div class="form-column" {% if field.endswith('_options') %} style="display:none;" {% endif %}>
+                                <label for="{{ field }}">
+                                    {{ field }} 
+                                    {% if (section == "اطلاعات هویتی" or section == "اطلاعات دسترسی") and field in ["آدرس محل سکونت", "شماره تماس اضطراری", "نام و نام خانوادگی", "کد ملی", "تاریخ تولد", "جنسیت", "وضعیت تأهل", "تلفن همراه"] %}
+                                        <span class="required">*</span>
+                                    {% endif %}
+                                </label>
+        
+                                <!-- Input Field Types -->
+                                {% if options == "text" %}
+                                    <input type="text" id="{{ field }}" name="{{ field }}">
+        
+                                {% elif options == "number" %}
+                                    <input type="number" id="{{ field }}" name="{{ field }}">
+        
+                                {% elif options == "date" %}
+                                    <input type="text" id="{{ field }}" name="{{ field }}" class="datepicker" required>
+        
+                                {% elif options == "textarea" %}
+                                    <textarea id="{{ field }}" name="{{ field }}"></textarea>
+        
+                                {% elif options == "checkboxes" %}
+                                    <div class="checkbox-group">
+                                        {% for option in fields[field + "_options"] %}
+                                            <label>
+                                                <input type="checkbox" name="{{ field }}" value="{{ option }}"> {{ option }}
+                                            </label>
+                                        {% endfor %}
                                     </div>
+        
+                                {% elif options == "select" %}
+                                    <select id="{{ field }}" name="{{ field }}" {% if section == "اطلاعات هویتی" and field in ["جنسیت", "وضعیت تأهل"] %} required {% endif %}>
+                                        <option value="" disabled selected>انتخاب کنید</option>
+                                        {% for option in fields[field + "_options"] %}
+                                            <option value="{{ option }}">{{ option }}</option>
+                                        {% endfor %}
+                                    </select>
+        
                                 {% endif %}
-                            {% endif %}
-
-                            <!-- Error message container below each field -->
-                            <div class="error-message" id="{{ field }}-error"></div>
-                        </div>
-                    {% endfor %}
-                </div>
+        
+                                <!-- Error message container below each field -->
+                                <div class="error-message" id="{{ field }}-error"></div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
                 <hr>
             {% endfor %}
+        
             <button type="submit">ارسال</button>
             <a href="{{ url_for('view_data') }}" class="view-data-btn">
                 <button type="button">مشاهده داده‌ها</button>
             </a>
-        </form>        
+        </form>
     </div>
     <footer>&copy; 2025 - سیستم ثبت اطلاعات</footer>
     <script>
@@ -90,6 +124,49 @@
           console.log("Persian Datepicker initialized!");
         });
     </script>
+    <script>
+        // Function to add a new row to the table
+        function addRow(section) {
+            const table = document.getElementById(section + '-table').getElementsByTagName('tbody')[0];
+            const row = table.insertRow(table.rows.length); // Add a new row at the end
+            const fields = {{ form_structure[section] | tojson | safe }}; // Get fields dynamically
+            let cell;
+
+            // Loop over each field in the section and create input elements
+            Object.keys(fields[0]).forEach(field => {
+                cell = row.insertCell();
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.name = `${section}_${field}[]`; // Name field with [] to collect multiple entries
+                input.placeholder = "Enter data";
+                cell.appendChild(input);
+            });
+
+            // Add a delete button in the last column of the row
+            cell = row.insertCell();
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.classList.add('delete-row-btn');
+            deleteBtn.textContent = 'حذف';
+            deleteBtn.onclick = function() {
+                deleteRow(row);
+            };
+            cell.appendChild(deleteBtn);
+        }
+
+        // Function to delete a row from the table
+        function deleteRow(row) {
+            row.parentNode.removeChild(row);
+        }
+
+        // Optional: Attach delete functionality to existing rows when the page loads
+        document.querySelectorAll('.delete-row-btn').forEach(function(button) {
+            button.onclick = function() {
+                deleteRow(button.closest('tr'));
+            };
+        });
+    </script>
+
 
     <script src="/static/js/form-submit.js" defer></script>
     <script src="/static/js/form-logic.js" defer></script>

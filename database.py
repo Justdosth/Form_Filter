@@ -174,18 +174,32 @@ COLUMN_LABELS = {
     "landline": "تلفن ثابت",
     "mobile": "تلفن همراه",
     "residence_address": "آدرس محل سکونت",
-    "services_offered": "سرویس‌های قابل ارائه",
-    "extra_services": "خدمات اضافی",
+    "services_offered": "سرویس‌های قابل ارائه:",
+    "extra_services": "خدمات اضافی:",
     "driving_capability": "توانایی رانندگی",
     "vehicle_details": "جزئیات وسیله نقلیه",
-    "limitations": "محدودیت‌ها",
+    "limitations": "محدودیت‌ها:",
     "home_size_restriction": "محدودیت متراژ خانه",
     "home_type_restriction": "نوع منزل",
     "relatives_presence": "حضور بستگان در منزل",
     "preferred_shifts": "شیفت‌های کاری",
-    "equipment_experience": "توانایی کار با تجهیزات",
+    "equipment_experience": "توانایی کار با تجهیزات:",
     "desired_job": "شغل مورد نظر",
     "interviewer_comments": "توضیحات مصاحبه",
+    
+    "acquaintances_name": "نام آشنا",
+    "acquaintances_relation": "رابطه",
+    "acquaintances_address": "آدرس",
+    "acquaintances_contact": "تماس",
+
+    "certificate_title": "عنوان مدرک",
+    "certificate_institution": "محل اخذ",
+    "certificate_year": "سال اخذ",
+
+    "work_experience_company_name": "نام شرکت",
+    "work_experience_responsibilities": "شرح مسئولیت‌ها",
+    "work_experience_reason_for_leaving": "علت ترک کار",
+    "work_experience_company_contact": "شماره تماس شرکت",
 }
 
 
@@ -219,12 +233,16 @@ def generate_form_structure():
             form_structure["اطلاعات هویتی"][persian_label] = field_type
             form_structure["اطلاعات هویتی"][persian_label + "_options"] = ["بله", "خیر"]
 
-        elif column_name in ['companion_details', 'residence_address']:
+        elif column_name in ['companion_details']:
             field_type = 'textarea'
             form_structure["اطلاعات هویتی"][persian_label] = field_type
 
         elif column_name in ['emergency_contact', 'mobile', 'landline']:
             field_type = 'text'
+            form_structure["اطلاعات دسترسی"][persian_label] = field_type
+        
+        elif column_name in ['residence_address']:
+            field_type = 'textarea'
             form_structure["اطلاعات دسترسی"][persian_label] = field_type
 
         elif column_name in ['services_offered']:
@@ -268,4 +286,57 @@ def generate_form_structure():
             field_type = 'textarea'
             form_structure["شغل مورد نظر و توضیحات مصاحبه"][persian_label] = field_type
 
+    # Add dynamic Acquaintances Section (from the Acquaintance table)
+    form_structure["آشنایان"] = []
+    acquaintances = Acquaintance.query.all()  # Fetch all acquaintances
+    for acquaintance in acquaintances:
+        form_structure["آشنایان"].append({
+            COLUMN_LABELS["acquaintances_name"]: acquaintance.name,
+            COLUMN_LABELS["acquaintances_relation"]: acquaintance.relation,
+            COLUMN_LABELS["acquaintances_address"]: acquaintance.address,
+            COLUMN_LABELS["acquaintances_contact"]: acquaintance.contact
+        })
+
+    # Add dynamic Certificates Section (from the Certificate table)
+    form_structure["مدارک"] = []
+    certificates = Certificate.query.all()  # Fetch all certificates
+    for certificate in certificates:
+        form_structure["مدارک"].append({
+            COLUMN_LABELS["certificate_title"]: certificate.title,
+            COLUMN_LABELS["certificate_institution"]: certificate.institution,
+            COLUMN_LABELS["certificate_year"]: certificate.year
+        })
+
+    # Add dynamic Work Experiences Section (from the WorkExperience table)
+    form_structure["سوابق کاری"] = []
+    work_experiences = WorkExperience.query.all()  # Fetch all work experiences
+    for work in work_experiences:
+        form_structure["سوابق کاری"].append({
+            COLUMN_LABELS["work_experience_company_name"]: work.company_name,
+            COLUMN_LABELS["work_experience_responsibilities"]: work.responsibilities,
+            COLUMN_LABELS["work_experience_reason_for_leaving"]: work.reason_for_leaving,
+            COLUMN_LABELS["work_experience_company_contact"]: work.company_contact
+        })
+
+    # Add empty row structure for adding new data to each dynamic section
+    form_structure["آشنایان"].append({
+        COLUMN_LABELS["acquaintances_name"]: '',
+        COLUMN_LABELS["acquaintances_relation"]: '',
+        COLUMN_LABELS["acquaintances_address"]: '',
+        COLUMN_LABELS["acquaintances_contact"]: ''
+    })
+
+    form_structure["مدارک"].append({
+        COLUMN_LABELS["certificate_title"]: '',
+        COLUMN_LABELS["certificate_institution"]: '',
+        COLUMN_LABELS["certificate_year"]: ''
+    })
+
+    form_structure["سوابق کاری"].append({
+        COLUMN_LABELS["work_experience_company_name"]: '',
+        COLUMN_LABELS["work_experience_responsibilities"]: '',
+        COLUMN_LABELS["work_experience_reason_for_leaving"]: '',
+        COLUMN_LABELS["work_experience_company_contact"]: ''
+    })
+    
     return dict(form_structure)
