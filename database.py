@@ -2,11 +2,14 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.types import JSON
 from sqlalchemy import inspect
 from collections import defaultdict
+from pprint import pprint
+import json
+
 
 db = SQLAlchemy()
 
 
-class FormData(db.Model):
+class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
     # اطلاعات هویتی
@@ -56,12 +59,12 @@ class FormData(db.Model):
     work_experiences = db.relationship('WorkExperience', backref='form', lazy=True)
 
     def __repr__(self):
-        return f'<FormData {self.full_name}>'
+        return f'<User {self.full_name}>'
 
 
 class Acquaintance(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    form_id = db.Column(db.Integer, db.ForeignKey('form_data.id'), nullable=False)
+    form_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
     name = db.Column(db.String(200), nullable=False)
     relation = db.Column(db.String(100), nullable=False)
@@ -74,7 +77,7 @@ class Acquaintance(db.Model):
 
 class Certificate(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    form_id = db.Column(db.Integer, db.ForeignKey('form_data.id'), nullable=False)
+    form_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
     title = db.Column(db.String(200), nullable=False)  # عنوان مدرک
     institution = db.Column(db.String(200), nullable=False)  # محل اخذ
@@ -86,7 +89,7 @@ class Certificate(db.Model):
 
 class WorkExperience(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    form_id = db.Column(db.Integer, db.ForeignKey('form_data.id'), nullable=False)
+    form_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
     company_name = db.Column(db.String(200), nullable=False)  # نام شرکت یا کارفرما
     responsibilities = db.Column(db.Text, nullable=True)  # شرح مسئولیت‌ها
@@ -154,7 +157,7 @@ EQUIPMENT_EXPERIENCE_LIST = [
     "اکسی‌متر",
     "ساکشن",
     "سوند",
-    "تب کولستومی",
+    "کولستومی",
     "دستگاه نوار قلب",
     "ویلچر",
     "بالابرهای بیمار",
@@ -187,30 +190,32 @@ COLUMN_LABELS = {
     "desired_job": "شغل مورد نظر",
     "interviewer_comments": "توضیحات مصاحبه",
     
-    "acquaintances_name": "نام آشنا",
-    "acquaintances_relation": "رابطه",
-    "acquaintances_address": "آدرس",
-    "acquaintances_contact": "تماس",
+    "acquaintances_name": "نام و نام خانوادگی معرف",
+    "acquaintances_relation": "نسبت با شما",
+    "acquaintances_address": " آدرس محل سکونت",
+    "acquaintances_contact": "شماره تماس",
 
     "certificate_title": "عنوان مدرک",
     "certificate_institution": "محل اخذ",
     "certificate_year": "سال اخذ",
 
-    "work_experience_company_name": "نام شرکت",
+    "work_experience_company_name": "نام شرکت (نام کارفرما)",
     "work_experience_responsibilities": "شرح مسئولیت‌ها",
-    "work_experience_reason_for_leaving": "علت ترک کار",
-    "work_experience_company_contact": "شماره تماس شرکت",
+    "work_experience_reason_for_leaving": "علت قطع همکاری",
+    "work_experience_company_contact": "شماره تماس",
 }
 
 
 def generate_form_structure():
     form_structure = defaultdict(dict)
+    persian_to_english_mapping = {}
 
-    inspector = inspect(FormData)
+    inspector = inspect(User)
     columns = inspector.columns  
 
     for column_name, column in columns.items():
         persian_label = COLUMN_LABELS.get(column_name, column_name)  # Get Persian label, default to column name
+        persian_to_english_mapping[persian_label] = column_name
         
         if column_name in ['full_name', 'national_code', 'language_proficiency']:
             field_type = 'text'
@@ -285,6 +290,26 @@ def generate_form_structure():
         elif column_name in ['desired_job', 'interviewer_comments']:
             field_type = 'textarea'
             form_structure["شغل مورد نظر و توضیحات مصاحبه"][persian_label] = field_type
+    
+    # Add dynamic sections to mapping
+    dynamic_sections = [
+        ("acquaintances_name", "نام و نام خانوادگی معرف"),
+        ("acquaintances_relation", "نسبت با شما"),
+        ("acquaintances_address", "آدرس محل سکونت"),
+        ("acquaintances_contact", "شماره تماس"),
+
+        ("certificate_title", "عنوان مدرک"),
+        ("certificate_institution", "محل اخذ"),
+        ("certificate_year", "سال اخذ"),
+
+        ("work_experience_company_name", "نام شرکت (نام کارفرما)"),
+        ("work_experience_responsibilities", "شرح مسئولیت‌ها"),
+        ("work_experience_reason_for_leaving", "علت قطع همکاری"),
+        ("work_experience_company_contact", "شماره تماس")
+    ]
+
+    for english, persian in dynamic_sections:
+        persian_to_english_mapping[persian] = english
 
     # Add dynamic Acquaintances Section (from the Acquaintance table)
     form_structure["آشنایان"] = []
@@ -338,5 +363,11 @@ def generate_form_structure():
         COLUMN_LABELS["work_experience_reason_for_leaving"]: '',
         COLUMN_LABELS["work_experience_company_contact"]: ''
     })
+
+    with open("form_structure_format.json", "w", encoding="utf-8") as f:
+        json.dump(form_structure, f, indent=2, ensure_ascii=False)
     
-    return dict(form_structure)
+    with open("persian_to_english_mapping.json", "w", encoding="utf-8") as f:
+        json.dump(persian_to_english_mapping, f, indent=2, ensure_ascii=False)
+    
+    return form_structure, persian_to_english_mapping

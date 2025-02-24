@@ -17,34 +17,37 @@ function validateForm(event) {
     let isValid = true;
     let firstInvalidElement = null;
 
-    // List of required fields (adjust based on backend logic)
-    const requiredFields = ["نام", "نام خانوادگی", "جنس", "وضعیت تاهل", "اطلاعات آدرس"];
-    
-    requiredFields.forEach((field) => {
-        const inputElement = document.getElementById(field);
-        const errorElement = document.getElementById(`${field}-error`);
+    // Get all required input/select elements
+    const requiredElements = document.querySelectorAll("[required]");
 
-        // Clear previous error messages
-        errorElement.textContent = "";
+    requiredElements.forEach((inputElement) => {
+        const fieldName = inputElement.getAttribute("name") || inputElement.id;
+        const errorElement = document.getElementById(`${fieldName}-error`);
+
+        // Clear previous errors
+        if (errorElement) {
+            errorElement.textContent = "";
+            errorElement.style.display = "none";
+        }
         inputElement.classList.remove("error");
 
         // Validate field
-        if (!inputElement.value.trim() || (inputElement.tagName === "SELECT" && !inputElement.value)) {
-            errorElement.textContent = `لطفاً ${field} را وارد کنید.`;
-            errorElement.style.display = "block"; // Show error message
+        if (!inputElement.value.trim() || (inputElement.tagName === "SELECT" && inputElement.disabled)) {
+            if (errorElement) {
+                errorElement.textContent = `لطفاً ${fieldName} را وارد کنید.`;
+                errorElement.style.display = "block"; // Show error message
+            }
             inputElement.classList.add("error"); // Highlight field
-            isValid = false; // Mark form as invalid
+            isValid = false;
 
-            // Store the first invalid element
+            // Store the first invalid element for scrolling
             if (!firstInvalidElement) {
                 firstInvalidElement = inputElement;
             }
-        } else {
-            errorElement.style.display = "none"; // Hide error message
         }
     });
 
-    // Scroll to the first invalid element
+    // Scroll to the first invalid field
     if (!isValid && firstInvalidElement) {
         firstInvalidElement.scrollIntoView({ behavior: "smooth", block: "center" });
     }
@@ -54,6 +57,13 @@ function validateForm(event) {
         event.preventDefault();
     }
 }
+
+
+
+function clearBirthdayField() {
+    document.getElementById("تاریخ تولد").value = ""; 
+}
     
-  
-  
+window.onload = function() {
+    clearBirthdayField();
+};

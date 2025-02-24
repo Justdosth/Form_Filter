@@ -40,7 +40,7 @@
                             <tr>
                                 {% for field, _ in fields[0].items() %}
                                     <td>
-                                        <input type="text" name="{{ section }}_{{ field }}[]" placeholder="Enter data">
+                                        <input type="text" name="{{ persian_to_english_mapping.get(field, field) }}" placeholder="Enter data">
                                     </td>
                                 {% endfor %}
                                 <td><button type="button" class="delete-row-btn">حذف</button></td> <!-- Delete button -->
@@ -62,28 +62,28 @@
         
                                 <!-- Input Field Types -->
                                 {% if options == "text" %}
-                                    <input type="text" id="{{ field }}" name="{{ field }}">
+                                    <input type="text" id="{{ field }}" name="{{ persian_to_english_mapping.get(field, field) }}">
         
                                 {% elif options == "number" %}
-                                    <input type="number" id="{{ field }}" name="{{ field }}">
+                                    <input type="number" id="{{ field }}" name="{{ persian_to_english_mapping.get(field, field) }}">
         
                                 {% elif options == "date" %}
-                                    <input type="text" id="{{ field }}" name="{{ field }}" class="datepicker" required>
+                                    <input type="text" id="{{ field }}" name="{{ persian_to_english_mapping.get(field, field) }}" class="datepicker">
         
                                 {% elif options == "textarea" %}
-                                    <textarea id="{{ field }}" name="{{ field }}"></textarea>
+                                    <textarea id="{{ field }}" name="{{ persian_to_english_mapping.get(field, field) }}"></textarea>
         
                                 {% elif options == "checkboxes" %}
                                     <div class="checkbox-group">
                                         {% for option in fields[field + "_options"] %}
                                             <label>
-                                                <input type="checkbox" name="{{ field }}" value="{{ option }}"> {{ option }}
+                                                <input type="checkbox" name="{{ persian_to_english_mapping.get(field, field) }}" value="{{ option }}"> {{ option }}
                                             </label>
                                         {% endfor %}
                                     </div>
         
                                 {% elif options == "select" %}
-                                    <select id="{{ field }}" name="{{ field }}" {% if section == "اطلاعات هویتی" and field in ["جنسیت", "وضعیت تأهل"] %} required {% endif %}>
+                                    <select id="{{ field }}" name="{{ persian_to_english_mapping.get(field, field) }}" >
                                         <option value="" disabled selected>انتخاب کنید</option>
                                         {% for option in fields[field + "_options"] %}
                                             <option value="{{ option }}">{{ option }}</option>
@@ -125,11 +125,17 @@
         });
     </script>
     <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const formStructure = JSON.parse(`{{ form_structure | tojson | safe }}`);
+            console.log("Form structure:", formStructure);
+        });
         // Function to add a new row to the table
         function addRow(section) {
             const table = document.getElementById(section + '-table').getElementsByTagName('tbody')[0];
             const row = table.insertRow(table.rows.length); // Add a new row at the end
-            const fields = {{ form_structure[section] | tojson | safe }}; // Get fields dynamically
+            const formStructure = JSON.parse(`{{ form_structure | tojson | safe }}`);
+            const fields = formStructure[section]; // Get fields dynamically
+            console.log(fields)
             let cell;
 
             // Loop over each field in the section and create input elements

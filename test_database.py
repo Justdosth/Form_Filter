@@ -1,8 +1,5 @@
-import sqlite3
+from database import FormData
+print([column.name for column in FormData.__table__.columns])
 
-# Check table schema using SQLite CLI or Python
-conn = sqlite3.connect('instance/form_data.db')
-cursor = conn.cursor()
-cursor.execute("PRAGMA table_info(form_data);")
-print(cursor.fetchall())
-conn.close()
+# valid_fields = {column.name for column in FormData.__table__.columns}  # Get actual DB fields
+# form_data = {key: data[key] for key in data if key in valid_fields}  # Filter valid fields only
