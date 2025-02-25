@@ -108,6 +108,7 @@
         </form>
     </div>
     <footer>&copy; 2025 - سیستم ثبت اطلاعات</footer>
+
     <script>
         $(document).ready(function() {
           // Initialize the Persian Datepicker
@@ -124,6 +125,10 @@
           console.log("Persian Datepicker initialized!");
         });
     </script>
+
+    <script src="/static/js/form-logic.js" defer></script>
+    <script src="/static/js/form-submit.js" defer></script>
+
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const formStructure = JSON.parse(`{{ form_structure | tojson | safe }}`);
@@ -174,8 +179,7 @@
     </script>
 
 
-    <script src="/static/js/form-submit.js" defer></script>
-    <script src="/static/js/form-logic.js" defer></script>
+    
 </body>
 
 </html>

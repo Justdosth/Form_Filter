@@ -37,14 +37,14 @@ def home():
 
 
 @app.route('/submit-form', methods=['POST'])
+
 def submit_form():
     try:
         # 1️⃣ Dynamically Collect User Data
         user_data = {}
         for persian_key, english_key in persian_to_english_mapping.items():
-            print(english_key)
             value = request.form.get(english_key)
-            # print(value)
+            print(value)
             if english_key in ["special_care_companion", "driving_capability"]:  
                 user_data[english_key] = True if value == "on" else False
             elif english_key == "birth_date" and value:

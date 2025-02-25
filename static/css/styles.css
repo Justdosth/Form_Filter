@@ -11,6 +11,11 @@
         width: 1000px;
     }
 }
+:root {
+    writing-mode: horizontal-tb; /* or 'vertical-rl' for right-to-left vertical writing */
+    direction: rtl; /* 'ltr' for left-to-right */
+    text-orientation: mixed; /* or 'upright' for vertical text */
+}
 * {
     font-family: "IRANSans", Arial, sans-serif;
 }
