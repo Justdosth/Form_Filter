@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>فرم ثبت اطلاعات</title>
 
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+
     <!-- jQuery (Required) -->
     <script src="/static/js/jquery-3.6.0.min.js"></script>
 
@@ -83,7 +85,7 @@
                                     </div>
         
                                 {% elif options == "select" %}
-                                    <select id="{{ field }}" name="{{ persian_to_english_mapping.get(field, field) }}" >
+                                    <select id="{{ field }}" name="{{ persian_to_english_mapping.get(field, field) }}">
                                         <option value="" disabled selected>انتخاب کنید</option>
                                         {% for option in fields[field + "_options"] %}
                                             <option value="{{ option }}">{{ option }}</option>

@@ -2,7 +2,7 @@ function resetForm(event) {
     event.preventDefault(); // Prevent default submission behavior
 
     var form = document.querySelector('form');
-    var formData = new FormData(form);
+    var formData = new User(form);
 
     fetch('/submit-form', {
         method: 'POST',

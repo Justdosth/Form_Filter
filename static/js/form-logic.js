@@ -17,43 +17,41 @@ function validateForm(event) {
     let isValid = true;
     let firstInvalidElement = null;
 
-    // Get all required input/select/textarea elements
-    const requiredElements = document.querySelectorAll("[required]");
-    console.log(requiredElements);
+    // Find all labels containing <span class="required">*</span>
+    const requiredLabels = document.querySelectorAll("label:has(.required)");
 
-    requiredElements.forEach((inputElement) => {
-        const fieldName = inputElement.getAttribute("name") || inputElement.id;
-        const errorElement = document.getElementById(`${fieldName}-error`);
+    requiredLabels.forEach((label) => {
+        const fieldId = label.getAttribute("for"); // Get the 'for' attribute that links to input/select
+        const field = document.getElementById(fieldId); // Find the input/select with the corresponding ID
+        const errorElement = document.getElementById(`${fieldId}-error`);
 
-        // Clear previous errors
-        if (errorElement) {
-            errorElement.textContent = "";
-            errorElement.style.display = "none";
-        }
-        inputElement.classList.remove("error");
-
-        // Handle validation for different input types
-        if (
-            (inputElement.type === "checkbox" && !inputElement.checked) || 
-            (inputElement.type === "radio" && !document.querySelector(`input[name="${fieldName}"]:checked`)) ||
-            (inputElement.type !== "checkbox" && inputElement.type !== "radio" && !inputElement.value.trim()) ||
-            (inputElement.tagName === "SELECT" && inputElement.disabled)
-        ) {
+        if (field) {
+            // Clear previous error messages
             if (errorElement) {
-                errorElement.textContent = `لطفاً ${inputElement.getAttribute("data-label") || fieldName} را وارد کنید.`; 
-                errorElement.style.display = "block"; // Show error message
+                errorElement.textContent = "";
+                errorElement.style.display = "none";
             }
-            inputElement.classList.add("error"); // Highlight field
-            isValid = false;
+            field.classList.remove("error");
 
-            // Store the first invalid element for scrolling
-            if (!firstInvalidElement) {
-                firstInvalidElement = inputElement;
+            // Validate field: Check if it's empty
+            if (!field.value.trim()) {
+                if (errorElement) {
+                    errorElement.textContent = `لطفاً ${label.textContent.replace('*', '').trim()} را وارد کنید.`;
+                    errorElement.style.display = "block";
+                }
+                field.classList.add("error");
+
+                isValid = false;
+
+                // Store the first invalid element to focus on
+                if (!firstInvalidElement) {
+                    firstInvalidElement = field;
+                }
             }
         }
     });
 
-    // Scroll to the first invalid field
+    // Scroll to the first invalid field if any
     if (!isValid && firstInvalidElement) {
         firstInvalidElement.scrollIntoView({ behavior: "smooth", block: "center" });
     }
@@ -64,20 +62,20 @@ function validateForm(event) {
     }
 }
 
-
-
-
 function clearBirthdayField() {
-    document.getElementById("تاریخ تولد").value = ""; 
+    const birthdayField = document.querySelector("input[name='birth_date']");
+
+    if (birthdayField) {
+        // Clear the value of the input field
+        birthdayField.value = "";
+    }
 }
 
-// window.onload = function() {
-//     clearBirthdayField();
-// };
+
 
 document.addEventListener("DOMContentLoaded", function () {
-
     clearBirthdayField();
+
     const form = document.querySelector("form");
     if (form) {
         form.addEventListener("submit", validateForm);
