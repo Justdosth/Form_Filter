@@ -72,9 +72,24 @@ function clearBirthdayField() {
 }
 
 
+function scrollToTop() {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function scrollToBottom() {
+    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+}
+
 
 document.addEventListener("DOMContentLoaded", function () {
-    clearBirthdayField();
+    // clearBirthdayField();
+
+    const topBtn = document.getElementById("scrollToTopBtn");
+    if (window.scrollY > 300) {
+        topBtn.style.display = "block";
+    } else {
+        topBtn.style.display = "none";
+    }
 
     const form = document.querySelector("form");
     if (form) {
