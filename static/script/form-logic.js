@@ -21,8 +21,8 @@ function validateForm(event) {
     const requiredLabels = document.querySelectorAll("label:has(.required)");
 
     requiredLabels.forEach((label) => {
-        const fieldId = label.getAttribute("for"); // Get the 'for' attribute that links to input/select
-        const field = document.getElementById(fieldId); // Find the input/select with the corresponding ID
+        const fieldId = label.getAttribute("for"); // Get related field ID
+        const field = document.getElementById(fieldId); // Get the field
         const errorElement = document.getElementById(`${fieldId}-error`);
 
         if (field) {
@@ -51,6 +51,7 @@ function validateForm(event) {
         }
     });
 
+
     // Scroll to the first invalid field if any
     if (!isValid && firstInvalidElement) {
         firstInvalidElement.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -61,15 +62,7 @@ function validateForm(event) {
         event.preventDefault();
     }
 }
-
-function clearBirthdayField() {
-    const birthdayField = document.querySelector("input[name='birth_date']");
-
-    if (birthdayField) {
-        // Clear the value of the input field
-        birthdayField.value = "";
-    }
-}
+ 
 
 
 function scrollToTop() {
@@ -81,18 +74,16 @@ function scrollToBottom() {
 }
 
 
-document.addEventListener("DOMContentLoaded", function () {
-    // clearBirthdayField();
 
+document.addEventListener("DOMContentLoaded", function () {
+    
+});
+
+document.addEventListener("scroll", function () {
     const topBtn = document.getElementById("scrollToTopBtn");
     if (window.scrollY > 300) {
         topBtn.style.display = "block";
     } else {
         topBtn.style.display = "none";
-    }
-
-    const form = document.querySelector("form");
-    if (form) {
-        form.addEventListener("submit", validateForm);
     }
 });

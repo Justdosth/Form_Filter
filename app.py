@@ -3,11 +3,26 @@ from database import db, create_db, User, Acquaintance, Certificate, WorkExperie
 from datetime import datetime
 from threading import Timer
 from waitress import serve
+from persiantools.jdatetime import JalaliDate
+from datetime import datetime
 from flask_cors import CORS
 import webbrowser
 import sqlite3
 import os
 
+def convert_persian_to_gregorian(persian_date):
+    """
+    Converts a Persian (Jalali) date string (e.g., '1403/12/08') to a Gregorian date string ('YYYY-MM-DD').
+    """
+    try:
+        if persian_date:
+            year, month, day = map(int, persian_date.split('/'))
+            gregorian_date = JalaliDate(year, month, day).to_gregorian()
+            return gregorian_date.strftime('%Y-%m-%d')  # Convert to string format
+        return None  # Return None if the date is empty
+    except Exception as e:
+        print(f"Error converting Persian date: {str(e)}")
+        return None
 
 app = Flask(__name__)
 CORS(app)
@@ -48,18 +63,23 @@ def submit_form():
             if english_key in ["special_care_companion", "driving_capability"]:  
                 user_data[english_key] = True if value == "on" else False
             elif english_key == "birth_date" and value:
-                user_data[english_key] = datetime.strptime(value, '%Y-%m-%d')
+                user_data[english_key] = convert_persian_to_gregorian(value)
             else:
                 user_data[english_key] = value
 
         user = User(**user_data)
         db.session.add(user)
         db.session.flush()  # Get user.id before inserting related records
+        
+        user = User(**user_data)
+        db.session.add(user)
+        db.session.flush() 
 
         # 2️⃣ Dynamically Collect Acquaintances Data
         acquaintances_data = zip(
             request.form.getlist('آشنایان_نام و نام خانوادگی[]'),
             request.form.getlist('آشنایان_نسبت با شما[]'),
+            request.form.getlist('آشنایان_آدرس محل سکونت[]'),
             request.form.getlist('آشنایان_شماره تماس[]')
         )
 
@@ -95,7 +115,7 @@ def submit_form():
         # 5️⃣ Commit all data to the database
         db.session.commit()
         flash('Form submitted successfully!', 'success')
-        return redirect(url_for('view_data'))
+        return redirect(url_for('home'))
 
     except Exception as e:
         db.session.rollback()

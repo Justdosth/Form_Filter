@@ -10,12 +10,10 @@ db = SQLAlchemy()
 
 
 class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-
     # اطلاعات هویتی
     full_name = db.Column(db.String(200), nullable=False)
     birth_date = db.Column(db.Date, nullable=False)
-    national_code = db.Column(db.String(50), nullable=False)
+    national_code = db.Column(db.String(50), nullable=False, primary_key=True)
     language_proficiency = db.Column(db.String(200), nullable=True)
     gender = db.Column(db.String(10), nullable=False)  # "خانم" یا "آقا"
     marital_status = db.Column(db.String(50), nullable=False)
@@ -64,7 +62,7 @@ class User(db.Model):
 
 class Acquaintance(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    form_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    form_id = db.Column(db.Integer, db.ForeignKey('user.national_code'), nullable=False)
 
     name = db.Column(db.String(200), nullable=False)
     relation = db.Column(db.String(100), nullable=False)
@@ -77,7 +75,7 @@ class Acquaintance(db.Model):
 
 class Certificate(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    form_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    form_id = db.Column(db.Integer, db.ForeignKey('user.national_code'), nullable=False)
 
     title = db.Column(db.String(200), nullable=False)  # عنوان مدرک
     institution = db.Column(db.String(200), nullable=False)  # محل اخذ
@@ -89,7 +87,7 @@ class Certificate(db.Model):
 
 class WorkExperience(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    form_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    form_id = db.Column(db.Integer, db.ForeignKey('user.national_code'), nullable=False)
 
     company_name = db.Column(db.String(200), nullable=False)  # نام شرکت یا کارفرما
     responsibilities = db.Column(db.Text, nullable=True)  # شرح مسئولیت‌ها
@@ -192,7 +190,7 @@ COLUMN_LABELS = {
     
     "acquaintances_name": "نام و نام خانوادگی معرف",
     "acquaintances_relation": "نسبت با شما",
-    "acquaintances_address": " آدرس محل سکونت",
+    "acquaintances_address": "آدرس محل سکونت",
     "acquaintances_contact": "شماره تماس",
 
     "certificate_title": "عنوان مدرک",

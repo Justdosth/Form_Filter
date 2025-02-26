@@ -111,6 +111,17 @@
     </div>
     <button id="scrollToTopBtn" class="scroll-btn" onclick="scrollToTop()">▲</button>
     <button id="scrollToBottomBtn" class="scroll-btn" onclick="scrollToBottom()">▼</button>
+    {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+            <div class="flash-messages">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                {{ message }}
+                </div>
+            {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
 
     <footer>&copy; 2025 - سیستم ثبت اطلاعات</footer>
 
@@ -137,7 +148,7 @@
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const formStructure = JSON.parse(`{{ form_structure | tojson | safe }}`);
-            console.log("Form structure:", formStructure);
+            // console.log("Form structure:", formStructure);
         });
         // Function to add a new row to the table
         function addRow(section) {
