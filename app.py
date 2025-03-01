@@ -89,8 +89,6 @@ def submit_form():
             request.form.getlist('آشنایان_آدرس محل سکونت[]'),
             request.form.getlist('آشنایان_شماره تماس[]')
         )
-
-        print("the zip file")
         
         for name, relation, contact in acquaintances_data:
             if name:
@@ -106,7 +104,7 @@ def submit_form():
 
         for title, institution, year in certificates_data:
             if title:
-                certificate = Certificate(user_id=user.id, certificate_title=title, certificate_institution=institution, certificate_year=year)
+                certificate = Certificate(user_id=user.national_code, certificate_title=title, certificate_institution=institution, certificate_year=year)
                 db.session.add(certificate)
 
         # 6️⃣ Dynamically Collect Work Experience
@@ -118,18 +116,18 @@ def submit_form():
 
         for company_name, responsibilities, reason in work_experience_data:
             if company_name:
-                work_exp = WorkExperience(user_id=user.id, work_experience_company_name=company_name, work_experience_responsibilities=responsibilities, work_experience_reason_for_leaving=reason)
+                work_exp = WorkExperience(user_id=user.national_code, work_experience_company_name=company_name, work_experience_responsibilities=responsibilities, work_experience_reason_for_leaving=reason)
                 db.session.add(work_exp)
 
         # 7️⃣ Commit all data to the database
         db.session.commit()
-        
         return jsonify({"success": True, "message": "Form submitted successfully!"})  # Send JSON response
 
     except Exception as e:
         db.session.rollback()
-        return jsonify({"success": False, "message": f"Error submitting form: {str(e)}"})  # Send error JSON response
-
+        error_type = type(e).__name__  # Get the error type
+        error_message = str(e)  # Get the actual error message
+        return jsonify({"success": False, "error_type": error_type, "message": error_message})
 
 @app.route('/view-data')
 def view_data():

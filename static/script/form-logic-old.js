@@ -1,49 +1,17 @@
-/**
- * Handles AJAX form submission with a beautiful SweetAlert popup.
- * @param {string} formId - The ID of the form.
- * @param {string} submitUrl - The API endpoint for submission.
- */
-function setupFormSubmission(formId, submitUrl) {
-    const form = document.getElementById(formId);
-    
-    if (!form) return;
+// function toggleCountryField(selectElement) {
+//     const countryDetails = document.getElementById('country-details');
+//     const countryInput = document.getElementById('country-name');
 
-    form.addEventListener("submit", function (event) {
-        // Prevent traditional form submission
-        event.preventDefault();
+//     if (selectElement.value === 'ساکن شهرستان') {
+//         countryDetails.style.display = 'block';
+//         countryInput.required = true; // Make it required when visible
+//     } else {
+//         countryDetails.style.display = 'none';
+//         countryInput.required = false; // Remove required if hidden
+//         countryInput.value = ''; // Clear the value when hidden
+//     }
+// }
 
-        // Call the validateForm function to check validation before submission
-        let validationPassed = validateForm(event);
-
-        // If validation fails, stop further processing (form submission)
-        if (!validationPassed) return;
-
-        // If validation passes, collect form data
-        let formData = new FormData(form); // Collect form data
-
-        // Send data via AJAX
-        fetch(submitUrl, {
-            method: "POST",
-            body: formData
-        })
-        .then(response => response.json()) // Parse JSON response
-        .then(data => {
-            showPopupMessage(data.success, data.message);
-            if (data.success) {
-                setTimeout(() => window.location.reload(), 2000); // Reload on success
-            }
-        })
-        .catch(() => {
-            showPopupMessage(false, "Something went wrong! Please try again.");
-        });
-    });
-}
-
-/**
- * Validates the form and returns whether validation is successful.
- * @param {Event} event - The form submit event.
- * @returns {boolean} - Whether the form passes validation or not.
- */
 function validateForm(event) {
     let isValid = true;
     let firstInvalidElement = null;
@@ -82,17 +50,48 @@ function validateForm(event) {
         }
     });
 
+
     // Scroll to the first invalid field if any
     if (!isValid && firstInvalidElement) {
         firstInvalidElement.scrollIntoView({ behavior: "smooth", block: "center" });
     }
 
-    // If validation fails, prevent form submission
+    // Prevent form submission if validation fails
     if (!isValid) {
         event.preventDefault();
     }
+}
+ 
+/**
+ * Handles AJAX form submission with a beautiful SweetAlert popup.
+ * @param {string} formId - The ID of the form.
+ * @param {string} submitUrl - The API endpoint for submission.
+ */
+function setupFormSubmission(formId, submitUrl) {
+    const form = document.getElementById(formId);
+    
+    if (!form) return;
 
-    return isValid; // Return validation result
+    form.addEventListener("submit", function (event) {
+        event.preventDefault(); // Prevent traditional form submission
+
+        let formData = new FormData(form); // Collect form data
+
+        fetch(submitUrl, {
+            method: "POST",
+            body: formData
+        })
+        .then(response => response.json()) // Parse JSON response
+        .then(data => {
+            showPopupMessage(data.success, data.message);
+            if (data.success) {
+                setTimeout(() => window.location.reload(), 2000); // Reload on success
+            }
+        })
+        .catch(() => {
+            showPopupMessage(false, "Something went wrong! Please try again.");
+        });
+    });
 }
 
 /**
@@ -123,21 +122,17 @@ function showPopupMessage(isSuccess, message) {
         document.body.style.overflow = 'auto';  // Restore page scroll
 
         if (!isSuccess && result.isConfirmed) {
-            // Handle retry or other actions after failure
+            
         }
     });
 }
 
-/**
- * Scrolls the page to the top smoothly.
- */
+
+
 function scrollToTop() {
     window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-/**
- * Scrolls the page to the bottom smoothly.
- */
 function scrollToBottom() {
     window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
 }
