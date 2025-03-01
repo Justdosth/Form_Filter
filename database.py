@@ -13,6 +13,7 @@ class User(db.Model):
     # اطلاعات هویتی
     full_name = db.Column(db.String(200), nullable=False)
     birth_date = db.Column(db.Date, nullable=False)
+    birth_date_Persian = db.Column(db.String(10), nullable=False)
     national_code = db.Column(db.String(50), nullable=False, primary_key=True)
     language_proficiency = db.Column(db.String(200), nullable=True)
     gender = db.Column(db.String(10), nullable=False)  # "خانم" یا "آقا"
@@ -190,7 +191,7 @@ COLUMN_LABELS = {
     
     "acquaintances_name": "نام و نام خانوادگی معرف",
     "acquaintances_relation": "نسبت با شما",
-    "acquaintances_address": "آدرس محل سکونت",
+    "acquaintances_address": "آدرس محل سکونت فرد",
     "acquaintances_contact": "شماره تماس",
 
     "certificate_title": "عنوان مدرک",
@@ -293,7 +294,7 @@ def generate_form_structure():
     dynamic_sections = [
         ("acquaintances_name", "نام و نام خانوادگی معرف"),
         ("acquaintances_relation", "نسبت با شما"),
-        ("acquaintances_address", "آدرس محل سکونت"),
+        ("acquaintances_address", "آدرس محل سکونت فرد"),
         ("acquaintances_contact", "شماره تماس"),
 
         ("certificate_title", "عنوان مدرک"),

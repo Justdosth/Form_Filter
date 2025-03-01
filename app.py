@@ -4,7 +4,9 @@ from datetime import datetime
 from threading import Timer
 from waitress import serve
 from persiantools.jdatetime import JalaliDate
+from pprint import pprint
 from datetime import datetime
+from sqlalchemy import inspect
 from flask_cors import CORS
 import webbrowser
 import sqlite3
@@ -55,27 +57,32 @@ def home():
 
 def submit_form():
     try:
-        # 1️⃣ Dynamically Collect User Data
+         # 1️⃣ Get Actual Columns from User Model
+        user_columns = list(inspect(User).c.keys())  # Get column names as a list
+
+        # 2️⃣ Dynamically Collect User Data
         user_data = {}
         for persian_key, english_key in persian_to_english_mapping.items():
-            value = request.form.get(english_key)
-            print(value)
-            if english_key in ["special_care_companion", "driving_capability"]:  
-                user_data[english_key] = True if value == "on" else False
-            elif english_key == "birth_date" and value:
-                user_data[english_key] = convert_persian_to_gregorian(value)
-            else:
-                user_data[english_key] = value
+            if english_key in user_columns:  # Only keep valid columns
+                value = request.form.get(english_key)
+                if english_key in ["special_care_companion", "driving_capability"]:
+                    user_data[english_key] = True if value == "on" else False
+                elif english_key == "birth_date" and value:
+                    user_data["birth_date_Persian"] = value
+                    converted_date = convert_persian_to_gregorian(value)  # Ensure this returns 'YYYY-MM-DD'
+                    if isinstance(converted_date, str):  # Convert string to Python date object
+                        user_data[english_key] = datetime.strptime(converted_date, "%Y-%m-%d").date()
+                    else:
+                        user_data[english_key] = converted_date  # If already a date, use as is
+                elif english_key != "birth_date_Persian":
+                    user_data[english_key] = value
 
-        user = User(**user_data)
+        # 3️⃣ Create and Add User Object
+        user = User(**user_data)  # Ensure only valid columns are passed
         db.session.add(user)
         db.session.flush()  # Get user.id before inserting related records
-        
-        user = User(**user_data)
-        db.session.add(user)
-        db.session.flush() 
 
-        # 2️⃣ Dynamically Collect Acquaintances Data
+        # 4️⃣ Dynamically Collect Acquaintances Data
         acquaintances_data = zip(
             request.form.getlist('آشنایان_نام و نام خانوادگی[]'),
             request.form.getlist('آشنایان_نسبت با شما[]'),
@@ -83,12 +90,14 @@ def submit_form():
             request.form.getlist('آشنایان_شماره تماس[]')
         )
 
+        print("the zip file")
+        
         for name, relation, contact in acquaintances_data:
             if name:
-                acquaintance = Acquaintance(user_id=user.id, acquaintances_name=name, acquaintances_relation=relation, work_experience_company_contact=contact)
+                acquaintance = Acquaintance(user_id=user.national_code, acquaintances_name=name, acquaintances_relation=relation, work_experience_company_contact=contact)
                 db.session.add(acquaintance)
 
-        # 3️⃣ Dynamically Collect Certificates
+        # 5️⃣ Dynamically Collect Certificates
         certificates_data = zip(
             request.form.getlist('مدارک_عنوان مدرک[]'),
             request.form.getlist('مدارک_محل اخذ[]'),
@@ -100,7 +109,7 @@ def submit_form():
                 certificate = Certificate(user_id=user.id, certificate_title=title, certificate_institution=institution, certificate_year=year)
                 db.session.add(certificate)
 
-        # 4️⃣ Dynamically Collect Work Experience
+        # 6️⃣ Dynamically Collect Work Experience
         work_experience_data = zip(
             request.form.getlist('سوابق کاری_نام شرکت (نام کارفرما)[]'),
             request.form.getlist('سوابق کاری_شرح مسئولیت‌ها[]'),
@@ -112,15 +121,14 @@ def submit_form():
                 work_exp = WorkExperience(user_id=user.id, work_experience_company_name=company_name, work_experience_responsibilities=responsibilities, work_experience_reason_for_leaving=reason)
                 db.session.add(work_exp)
 
-        # 5️⃣ Commit all data to the database
+        # 7️⃣ Commit all data to the database
         db.session.commit()
-        flash('Form submitted successfully!', 'success')
-        return redirect(url_for('home'))
+        
+        return jsonify({"success": True, "message": "Form submitted successfully!"})  # Send JSON response
 
     except Exception as e:
         db.session.rollback()
-        flash(f'Error submitting form: {str(e)}', 'danger')
-        return redirect(url_for('home'))
+        return jsonify({"success": False, "message": f"Error submitting form: {str(e)}"})  # Send error JSON response
 
 
 @app.route('/view-data')
@@ -130,7 +138,7 @@ def view_data():
     cursor = conn.cursor()
     
     # Fetch data from the main form_data table
-    cursor.execute("SELECT * FROM form_data")  # Adjust table name if needed
+    cursor.execute("SELECT * FROM User")  # Adjust table name if needed
     form_data_rows = cursor.fetchall()
     
     # # Fetch data from additional tables (e.g., acquaintances, certificates, work experience)
@@ -144,6 +152,7 @@ def view_data():
     # work_experience_rows = cursor.fetchall()
     
     conn.close()
+    
 
     # Now, pass the data to the template for rendering
     return render_template(
