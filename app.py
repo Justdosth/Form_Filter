@@ -1,11 +1,36 @@
-from flask import Flask, render_template, request, redirect, jsonify
-from database import db, FormData, create_db  # Import database and models
+from flask import Flask, render_template, request, redirect, jsonify, url_for, flash
+from database import db, create_db, User, Acquaintance, Certificate, WorkExperience, generate_form_structure
+from datetime import datetime
 from threading import Timer
 from waitress import serve
+from persiantools.jdatetime import JalaliDate
+from pprint import pprint
+from datetime import datetime
+from sqlalchemy import inspect
+from flask_cors import CORS
 import webbrowser
 import sqlite3
+import os
+
+def convert_persian_to_gregorian(persian_date):
+    """
+    Converts a Persian (Jalali) date string (e.g., '1403/12/08') to a Gregorian date string ('YYYY-MM-DD').
+    """
+    try:
+        if persian_date:
+            year, month, day = map(int, persian_date.split('/'))
+            gregorian_date = JalaliDate(year, month, day).to_gregorian()
+            return gregorian_date.strftime('%Y-%m-%d')  # Convert to string format
+        return None  # Return None if the date is empty
+    except Exception as e:
+        print(f"Error converting Persian date: {str(e)}")
+        return None
 
 app = Flask(__name__)
+CORS(app)
+
+# Set the secret key for sessions
+app.config['SECRET_KEY'] = os.urandom(24)  # This generates a random 24-byte key
 
 # Configure the database URI (use SQLite for simplicity)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///form_data.db'  # SQLite database file
@@ -17,181 +42,125 @@ db.init_app(app)
 # Create the database tables (if they don't exist yet)
 create_db(app)
 
-form_structure = {
-    "اطلاعات هویتی": {
-        "نام": "text",
-        "نام خانوادگی": "text",
-        "کد ملی": "text",
-        "تاریخ تولد": "date",
-        "جنسیت": ["مرد", "زن"],
-        "وضعیت تاهل": ["مجرد", "متاهل"],
-        "تسلط بر زبان‌ها": "text",
-        "آیا شخصی را دارید که نیاز به مراقبت ویژه دارد و باید با شما همراه باشد؟ اگر بله توضیح دهید.": ["بله", "خیر"]
-    },
+# Initialize global variables with app context
+with app.app_context():
+    form_structure, persian_to_english_mapping = generate_form_structure()
 
-
-    "اطلاعات دسترسی": {
-        "اطلاعات آدرس": ["ساکن تهران", "ساکن کرج", "ساکن شهرستان"],
-        "سرویس‌هایی که می‌دهد": ["کودک", "سالمند", "امور تخصصی بیماران"],
-        "سرویس‌های اضافه": ["نظافت منزل", "آشپزی", "مهمان داری", "کمک آموزشی", "خرید منزل"],
-        "مدرک و گواهی‌نامه‌ها": [
-            "فاقد سواد", "زیر دیپلم", "دیپلم", "فوق دیپلم", "لیسانس", "فوق لیسانس", "دکتری"
-        ],
-        "سایر مدارک متفرقه": "text",
-        "محدودیت‌ها": [
-            "حیوان خانگی", "متراژ", "منزل قدیمی", "منزل نوساخت",
-            "توانایی سفر خارج شهر", "توانایی سفر خارج کشور",
-            "خدمت به خانم", "خدمت به آقا"
-        ],
-    },
-    "ترجیحات خدمات": {
-        "مناطق مورد نظر جهت خدمت‌دهی": "text",
-        "شیفت‌های مورد نظر": "text",
-        "تعطیل کاری": ["بله", "خیر"],
-        "محدوده جدا": "text",
-        "نیاز به نیروی کمکی": ["بله", "خیر"],
-        "آوردن همراه": "text",
-        "حضور همراه بیمار در منزل": ["بله", "خیر"],
-        "توضیحات": "textarea",
-    },
-}
 
 @app.route("/", methods=["GET", "POST"])
-def index():
-    return render_template('multi_page_form.html', form_structure=form_structure)
-def form():
-    if request.method == "POST":
-        # Collect data from form
-        form_data = FormData(
-            name=request.form['نام'],
-            last_name=request.form['نام خانوادگی'],
-            national_code=request.form['کد ملی'],
-            birth_date=request.form.get('سن', type=date),
-            gender=request.form.get('جنس'),
-            marital_status=request.form.get('وضعیت تاهل'),
-            salary=request.form.get('حقوق مورد نظر', type=float),
-            language_proficiency=request.form.get('تسلط بر زبان‌ها'),
-            work_experience=request.form.get('سابقه کاری'),
-            
-            # Additional Information
-            address=request.form.get('اطلاعات آدرس'),
-            services_offered=request.form.get('سرویس‌هایی که می‌دهد'),
-            extra_services=request.form.get('سرویس‌های اضافه'),
-            certifications=request.form.get('مدرک و گواهی‌نامه‌ها'),
-            other_documents=request.form.get('سایر مدارک متفرقه'),
-            limitations=request.form.get('محدودیت‌ها'),
-
-            # Service Preferences
-            preferred_areas=request.form.get('مناطق مورد نظر جهت خدمت‌دهی'),
-            preferred_shifts=request.form.get('شیفت‌های مورد نظر'),
-            holiday_work=request.form.get('تعطیل کاری'),
-            separate_zone=request.form.get('محدوده جدا'),
-            need_helper=request.form.get('نیاز به نیروی کمکی'),
-            bring_accompanying=request.form.get('آوردن همراه'),
-            patient_accompanying_at_home=request.form.get('حضور همراه بیمار در منزل'),
-            comments=request.form.get('توضیحات')
-        )
-
-        # Save data to database
-        try:
-            db.session.add(form_data)
-            db.session.commit()
-            return "اطلاعات با موفقیت ارسال شد!"
-        except Exception as e:
-            db.session.rollback()
-            return f"Error: {e}"
-
-    return render_template("multi_page_form.html", form_structure=form_structure)
-
-@app.route('/view-data')
-def view_data():
-    # Flatten the form structure for headers
-    headers = []
-    for section, fields in form_structure.items():
-        headers.extend(fields.keys())
+def home():
     
-    # Fetch data from the database
-    conn = sqlite3.connect('instance/form_data.db')
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM form_data")  # Adjust table name if needed
-    rows = cursor.fetchall()
-    conn.close()
-
-    return render_template('view_data.html', headers=headers, rows=rows)
+    return render_template('multi_page_form.html', form_structure=form_structure, persian_to_english_mapping=persian_to_english_mapping)
 
 
 @app.route('/submit-form', methods=['POST'])
+
 def submit_form():
     try:
-        # Map Persian field names to model attributes
-        field_mapping = {
-            "نام": "name",
-            "نام خانوادگی": "last_name",
-            "سن": "age",
-            "جنس": "gender",
-            "وضعیت تاهل": "marital_status",
-            "کد ملی": "national_code",
-            "تسلط بر زبان‌ها": "language_proficiency",
-            "سابقه کاری": "work_experience",
-            "اطلاعات آدرس": "address",
-            "شهرستان": "country_name",
-            "سرویس‌هایی که می‌دهد": "services_offered",
-            "سرویس‌های اضافه": "extra_services",
-            "مدرک و گواهی‌نامه‌ها": "certifications",
-            "سایر مدارک متفرقه": "other_documents",
-            "محدودیت‌ها": "limitations",
-            "مناطق مورد نظر جهت خدمت‌دهی": "preferred_areas",
-            "شیفت‌های مورد نظر": "preferred_shifts",
-            "تعطیل کاری": "holiday_work",
-            "محدوده جدا": "separate_zone",
-            "نیاز به نیروی کمکی": "need_helper",
-            "آوردن همراه": "bring_accompanying",
-            "حضور همراه بیمار در منزل": "patient_accompanying_at_home",
-            "توضیحات": "comments",
-        }
+         # 1️⃣ Get Actual Columns from User Model
+        user_columns = list(inspect(User).c.keys())  # Get column names as a list
 
-        # # Map the request form to model fields
-        # form_data = {field_mapping[key]: value for key, value in request.form.items() if key in field_mapping}
+        # 2️⃣ Dynamically Collect User Data
+        user_data = {}
+        for persian_key, english_key in persian_to_english_mapping.items():
+            if english_key in user_columns:  # Only keep valid columns
+                value = request.form.get(english_key)
+                if english_key in ["special_care_companion", "driving_capability"]:
+                    user_data[english_key] = True if value == "on" else False
+                elif english_key == "birth_date" and value:
+                    user_data["birth_date_Persian"] = value
+                    converted_date = convert_persian_to_gregorian(value)  # Ensure this returns 'YYYY-MM-DD'
+                    if isinstance(converted_date, str):  # Convert string to Python date object
+                        user_data[english_key] = datetime.strptime(converted_date, "%Y-%m-%d").date()
+                    else:
+                        user_data[english_key] = converted_date  # If already a date, use as is
+                elif english_key != "birth_date_Persian":
+                    user_data[english_key] = value
 
-        # Map the request form to model fields, handling empty strings
-        form_data = {
-            field_mapping[key]: (value if value.strip() else None)  # Convert empty strings to None
-            for key, value in request.form.items()
-            if key in field_mapping
-        }
+        # 3️⃣ Create and Add User Object
+        user = User(**user_data)  # Ensure only valid columns are passed
+        db.session.add(user)
+        db.session.flush()  # Get user.id before inserting related records
 
-        # Optional: If you want to handle the country_name (dynamic field)
-        country_name = form_data.get('country_name', None)
+        # 4️⃣ Dynamically Collect Acquaintances Data
+        acquaintances_data = zip(
+            request.form.getlist('آشنایان_نام و نام خانوادگی[]'),
+            request.form.getlist('آشنایان_نسبت با شما[]'),
+            request.form.getlist('آشنایان_آدرس محل سکونت[]'),
+            request.form.getlist('آشنایان_شماره تماس[]')
+        )
         
-        # Handle optional `country_name` dynamically
-        if 'country_name' not in form_data:
-            form_data['country_name'] = None  # Default value if not provided
+        for name, relation, contact in acquaintances_data:
+            if name:
+                acquaintance = Acquaintance(user_id=user.national_code, acquaintances_name=name, acquaintances_relation=relation, work_experience_company_contact=contact)
+                db.session.add(acquaintance)
 
-                # Convert specific fields to their expected types if needed
-        if 'salary' in form_data and form_data['salary'] is not None:
-            form_data['salary'] = float(form_data['salary'])  # Convert salary to float
+        # 5️⃣ Dynamically Collect Certificates
+        certificates_data = zip(
+            request.form.getlist('مدارک_عنوان مدرک[]'),
+            request.form.getlist('مدارک_محل اخذ[]'),
+            request.form.getlist('مدارک_سال اخذ[]')
+        )
 
-        if 'age' in form_data and form_data['age'] is not None:
-            form_data['age'] = int(form_data['age'])  # Convert age to int
+        for title, institution, year in certificates_data:
+            if title:
+                certificate = Certificate(user_id=user.national_code, certificate_title=title, certificate_institution=institution, certificate_year=year)
+                db.session.add(certificate)
 
-        # Create a new FormData instance
-        new_entry = FormData(**form_data)
+        # 6️⃣ Dynamically Collect Work Experience
+        work_experience_data = zip(
+            request.form.getlist('سوابق کاری_نام شرکت (نام کارفرما)[]'),
+            request.form.getlist('سوابق کاری_شرح مسئولیت‌ها[]'),
+            request.form.getlist('سوابق کاری_علت قطع همکاری[]')
+        )
 
-        # Save data to the database
-        db.session.add(new_entry)
+        for company_name, responsibilities, reason in work_experience_data:
+            if company_name:
+                work_exp = WorkExperience(user_id=user.national_code, work_experience_company_name=company_name, work_experience_responsibilities=responsibilities, work_experience_reason_for_leaving=reason)
+                db.session.add(work_exp)
+
+        # 7️⃣ Commit all data to the database
         db.session.commit()
+        return jsonify({"success": True, "message": "Form submitted successfully!"})  # Send JSON response
 
-        return jsonify({"message": "Data submitted successfully!", "status": "success"})
     except Exception as e:
         db.session.rollback()
-        return jsonify({"message": str(e), "status": "error"}), 500
+        error_type = type(e).__name__  # Get the error type
+        error_message = str(e)  # Get the actual error message
+        return jsonify({"success": False, "error_type": error_type, "message": error_message})
 
+@app.route('/view-data')
+def view_data():
+    # Fetch form data
+    conn = sqlite3.connect('instance/form_data.db')
+    cursor = conn.cursor()
+    
+    # Fetch data from the main form_data table
+    cursor.execute("SELECT * FROM User")  # Adjust table name if needed
+    form_data_rows = cursor.fetchall()
+    
+    # # Fetch data from additional tables (e.g., acquaintances, certificates, work experience)
+    # cursor.execute("SELECT * FROM acquaintances")  # Replace with your actual table name
+    # acquaintances_rows = cursor.fetchall()
+
+    # cursor.execute("SELECT * FROM certificates")  # Replace with your actual table name
+    # certificates_rows = cursor.fetchall()
+
+    # cursor.execute("SELECT * FROM work_experience")  # Replace with your actual table name
+    # work_experience_rows = cursor.fetchall()
+    
+    conn.close()
+    
+
+    # Now, pass the data to the template for rendering
+    return render_template(
+        'view_data.html',
+        form_data_rows=form_data_rows
+    )
 
 
 def open_browser():
     webbrowser.open_new("http://127.0.0.1:2000/")
 
 if __name__ == "__main__":
-    Timer(1, open_browser).start()  # Open the browser after 1 second
-    app.run(debug=False, use_reloader=False, host="127.0.0.1", port=2000)
-    serve(app, host="0.0.0.0", port=2000)
+    app.run(debug=True, host="127.0.0.1", port=2000)
