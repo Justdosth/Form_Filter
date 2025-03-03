@@ -43,7 +43,7 @@
                             <tr>
                                 {% for field, _ in fields[0].items() %}
                                     <td>
-                                        <input type="text" name="{{ persian_to_english_mapping.get(field, field) }}" placeholder="Enter data">
+                                        <input type="text" name="{{ persian_to_english_mapping.get(field, field) }}[]" placeholder="Enter data">
                                     </td>
                                 {% endfor %}
                                 <td><button type="button" class="delete-row-btn">حذف</button></td> <!-- Delete button -->

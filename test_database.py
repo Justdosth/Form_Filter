@@ -1,5 +1,15 @@
-from database import FormData
-print([column.name for column in FormData.__table__.columns])
+import json
 
-# valid_fields = {column.name for column in FormData.__table__.columns}  # Get actual DB fields
-# form_data = {key: data[key] for key in data if key in valid_fields}  # Filter valid fields only
+# Assuming you're fetching this from your database
+unicode_string = "\u0627\u0645\u0648\u0631 \u0622\u0645\u0648\u0632\u0634\u06cc"
+
+def decode_unicode_string(s):
+    try:
+        # Check if the string has Unicode escape sequences
+        if isinstance(s, str) and '\\u' in s:
+            return json.loads('"' + s + '"')
+        return s
+    except json.JSONDecodeError:
+        return s
+
+print(decode_unicode_string(unicode_string))

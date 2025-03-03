@@ -41,12 +41,6 @@ h2 {
     padding-bottom: 5px;
 }
 
-/* Container for the table */
-.table-container {
-    width: 100%;
-    overflow-x: auto;
-    margin-top: 20px;
-}
 
 .form-container {
     max-width: 1200px;
@@ -168,9 +162,9 @@ tr:nth-child(even) {
     background-color: #f9f9f9;
 }
 
-tr:hover {
+/* tr:hover {
     background-color: #f1f1f1;
-}
+} */
 
 /* Button styling */
 .btn-container {
@@ -291,35 +285,86 @@ footer {
     text-align: center;
 }
 
-/* Customizing the confirm button */
-.custom-swal-button {
-    font-size: 14px;
-    padding: 5px 10px;
-    border-radius: 8px;
-    margin-top: 5px;
+
+/* Table Container */
+.table-container {
+    max-height: 400px; /* You can adjust the height */
+    overflow-y: auto; /* Make the table scrollable */
+    display: flex;
 }
 
+/* Table Styling */
 .styled-table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
-    font-size: 16px;
-    text-align: left;
 }
 
-.styled-table th, .styled-table td {
-    padding: 10px;
+/* Sticky Header Styling */
+.styled-table thead {
+    position: sticky;
+    top: 0;
+    background-color: #0056b3;
+    color: white;
+    z-index: 1;
+}
+
+/* Table Header and Cells Styling */
+.styled-table th,
+.styled-table td {
+    padding: 12px;
     border: 1px solid #ddd;
+    text-align: center;
 }
 
-.styled-table th {
-    background-color: #f4f4f4;
+/* Custom Actions Buttons Styling */
+.custom-swal-button {
+    background-color: #28a745;
+    color: white;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.custom-swal-button:hover {
+    background-color: #218838;
+}
+
+#relatedDataContainer {
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    background: #f9f9f9;
+    border-radius: 8px;
+}
+
+.related-data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.related-data-table th, .related-data-table td {
+    padding: 8px;
+    border: 1px solid #ddd;
+    text-align: center;
+}
+
+.related-data-table th {
+    background: #007bff;
+    color: white;
+}
+
+.no-data-message {
+    color: red;
     font-weight: bold;
+    text-align: center;
 }
 
 .error-message {
-    color: red;
+    color: darkred;
     font-weight: bold;
-    margin-top: 10px;
 }
+
 

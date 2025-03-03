@@ -1,39 +1,41 @@
 document.addEventListener("DOMContentLoaded", function () {
-    // Select all buttons that fetch related data
-    document.querySelectorAll(".view-acquaintances, .view-certificates, .view-work-experience")
-        .forEach(button => {
-            button.addEventListener("click", function () {
-                let userId = this.getAttribute("data-user-id"); // Get the User ID
-                let actionType = this.classList.contains("view-acquaintances") ? "acquaintances" :
-                                 this.classList.contains("view-certificates") ? "certificates" :
-                                 "work_experience"; // Determine which data to fetch
-
-                fetchRelatedData(userId, actionType); // Call function to fetch data
-            });
+    // Selecting all buttons dynamically
+    document.querySelectorAll(".view-acquaintances, .view-certificates, .view-work-experience").forEach(button => {
+        button.addEventListener("click", function () {
+            const userId = this.getAttribute("data-user-id"); // Get user ID
+            const tableName = this.classList.contains("view-acquaintances") ? "Acquaintances" :
+                              this.classList.contains("view-certificates") ? "Certificates" :
+                              "WorkExperience"; // Choose table based on button clicked
+            
+            fetchRelatedData(userId, tableName); // Call function to fetch data
         });
+    });
 });
 
+
 /**
- * Fetches related data from the server via AJAX.
- * @param {string} userId - The ID of the selected user.
- * @param {string} actionType - The type of data to fetch (acquaintances, certificates, work_experience).
+ * Fetch related data from the backend and display it on the page.
+ * @param {string} userId - The ID of the user.
+ * @param {string} tableName - The table name to fetch data from.
  */
-function fetchRelatedData(userId, dataType) {
-    fetch(`/fetch_related_data/${dataType}/${userId}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                if (data.data.length === 0) {
-                    displayMessage(`No ${dataType} data found for this user.`);
-                } else {
-                    displayRelatedData(data.data, dataType);
-                }
-            } else {
-                displayMessage("Error fetching data. Please try again.");
+function fetchRelatedData(userId, tableName) {
+    fetch(`/get_related_data?user_id=${userId}&table_name=${tableName}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("Server response was not OK");
             }
+            return response.json();
         })
-        .catch(() => displayMessage("Error connecting to the server."));
+        .then(data => {
+            displayRelatedData(data, tableName); // Display the fetched data
+        })
+        .catch(error => {
+            console.error("Error fetching related data:", error);
+            document.getElementById("relatedDataContainer").innerHTML = `<p class="error-message">⚠️ Could not load data.</p>`;
+        });
 }
+
+
 
 // Function to show a message
 function displayMessage(msg) {
@@ -43,48 +45,40 @@ function displayMessage(msg) {
 
 
 /**
- * Displays the fetched related data inside the container.
- * @param {Object} data - The JSON data received from the server.
- * @param {string} actionType - The type of data being displayed.
+ * Displays related data in a table format inside the #relatedDataContainer.
+ * @param {Array} data - The fetched data from the backend.
+ * @param {string} tableName - The table name (used for headings).
  */
-function displayRelatedData(data, actionType) {
-    let container = document.getElementById("relatedDataContainer");
-    container.innerHTML = ""; // Clear previous content
+function displayRelatedData(data, tableName) {
+    const container = document.getElementById("relatedDataContainer");
 
-    if (data.length === 0) {
-        container.innerHTML = `<p>No ${actionType.replace("_", " ")} found for this user.</p>`;
+    // If no data found, show message
+    if (!data || data.length === 0) {
+        container.innerHTML = `<p class="no-data-message">⚠️ No related data found for ${tableName}.</p>`;
         return;
     }
 
-    // Create table structure dynamically
-    let table = document.createElement("table");
-    table.classList.add("styled-table");
+    // Create table dynamically
+    let tableHtml = `<h2>${tableName} Details</h2>`;
+    tableHtml += `<table class="related-data-table"><thead><tr>`;
 
-    // Create table header
-    let thead = document.createElement("thead");
-    let headerRow = document.createElement("tr");
-    
-    // Extract keys from the first object as column headers
-    Object.keys(data[0]).forEach(colName => {
-        let th = document.createElement("th");
-        th.textContent = colName;
-        headerRow.appendChild(th);
+    // Get column names from the first object
+    Object.keys(data[0]).forEach(col => {
+        tableHtml += `<th>${col}</th>`;
     });
-    thead.appendChild(headerRow);
-    table.appendChild(thead);
+    tableHtml += `</tr></thead><tbody>`;
 
-    // Create table body
-    let tbody = document.createElement("tbody");
+    // Fill rows with data
     data.forEach(row => {
-        let tr = document.createElement("tr");
-        Object.values(row).forEach(cellValue => {
-            let td = document.createElement("td");
-            td.textContent = cellValue;
-            tr.appendChild(td);
+        tableHtml += `<tr>`;
+        Object.values(row).forEach(value => {
+            tableHtml += `<td>${value}</td>`;
         });
-        tbody.appendChild(tr);
+        tableHtml += `</tr>`;
     });
 
-    table.appendChild(tbody);
-    container.appendChild(table); // Append table to container
+    tableHtml += `</tbody></table>`;
+
+    // Update the container with the new table
+    container.innerHTML = tableHtml;
 }

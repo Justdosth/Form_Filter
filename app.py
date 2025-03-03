@@ -10,7 +10,17 @@ from sqlalchemy import inspect
 from flask_cors import CORS
 import webbrowser
 import sqlite3
+import json
 import os
+
+def decode_unicode_string(s):
+    try:
+        # Check if the string has Unicode escape sequences
+        if isinstance(s, str) and '\\u' in s:
+            return json.loads('"' + s + '"')
+        return s
+    except json.JSONDecodeError:
+        return s
 
 def convert_persian_to_gregorian(persian_date):
     """
@@ -84,12 +94,16 @@ def submit_form():
 
         # 4️⃣ Dynamically Collect Acquaintances Data
         acquaintances_data = zip(
-            request.form.getlist('آشنایان_نام و نام خانوادگی[]'),
-            request.form.getlist('آشنایان_نسبت با شما[]'),
-            request.form.getlist('آشنایان_آدرس محل سکونت[]'),
-            request.form.getlist('آشنایان_شماره تماس[]')
+            request.form.getlist('acquaintances_name[]'),
+            request.form.getlist('acquaintances_relation[]'),
+            request.form.getlist('acquaintances_address[]'),
+            request.form.getlist('work_experience_company_contact[]')
         )
-        
+        # Debugging: Print the extracted form data
+        print("Acquaintances Data Retrieved:")
+        for item in acquaintances_data:
+            print(item)
+
         for name, relation, contact in acquaintances_data:
             if name:
                 acquaintance = Acquaintance(user_id=user.national_code, acquaintances_name=name, acquaintances_relation=relation, work_experience_company_contact=contact)
@@ -144,6 +158,12 @@ def view_data():
     form_data_rows = cursor.fetchall()
 
     conn.close()
+    cell2 = "\u062a\u0628 \u0633\u0646\u062c"
+    # Example usage in the context of your rows
+    form_data_rows = [
+        [print(cell) for cell in row]
+        for row in form_data_rows
+    ]
 
     return render_template(
         'view_data.html',
@@ -184,38 +204,36 @@ def fetch_related_data(data_type, user_id):
 
     return jsonify({"success": True, "data": data_list})
 
-@app.route('/get-related-data', methods=['GET'])
+@app.route('/get_related_data')
 def get_related_data():
     user_id = request.args.get('user_id')
-    data_type = request.args.get('type')
+    table_name = request.args.get('table_name')
 
-    if not user_id or not data_type:
-        return jsonify({"error": "Missing user_id or type"}), 400
+    if not user_id or not table_name:
+        return jsonify({"error": "Missing parameters"}), 400
 
     conn = sqlite3.connect('instance/form_data.db')
     cursor = conn.cursor()
 
-    # Determine the table to fetch from
-    table_name = ""
-    if data_type == "acquaintances":
-        table_name = "Acquaintances"
-    elif data_type == "certificates":
-        table_name = "Certificates"
-    elif data_type == "work_experience":
-        table_name = "WorkExperience"
-    else:
-        return jsonify({"error": "Invalid data type"}), 400
+    # Check if table exists before querying
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,))
+    if not cursor.fetchone():
+        conn.close()
+        return jsonify([])  # Return empty if table doesn't exist
 
     # Fetch related data
     cursor.execute(f"SELECT * FROM {table_name} WHERE user_id = ?", (user_id,))
-    rows = cursor.fetchall()
+    data = cursor.fetchall()
+
+    # Get column names
+    column_names = [desc[0] for desc in cursor.description]
+
     conn.close()
 
-    # Convert data to JSON format
-    column_names = [desc[0] for desc in cursor.description]  # Get column names
-    result = [dict(zip(column_names, row)) for row in rows]  # Convert to list of dicts
+    # Convert to list of dictionaries
+    results = [dict(zip(column_names, row)) for row in data]
 
-    return jsonify(result)
+    return jsonify(results)
 
 @app.route("/get-acquaintances/<int:user_id>")
 def get_acquaintances(user_id):
