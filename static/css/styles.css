@@ -294,6 +294,32 @@ footer {
 /* Customizing the confirm button */
 .custom-swal-button {
     font-size: 14px;
-    padding: 10px 20px;
+    padding: 5px 10px;
     border-radius: 8px;
+    margin-top: 5px;
 }
+
+.styled-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    font-size: 16px;
+    text-align: left;
+}
+
+.styled-table th, .styled-table td {
+    padding: 10px;
+    border: 1px solid #ddd;
+}
+
+.styled-table th {
+    background-color: #f4f4f4;
+    font-weight: bold;
+}
+
+.error-message {
+    color: red;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
