@@ -128,6 +128,22 @@ function showPopupMessage(isSuccess, message) {
     });
 }
 
+function toggleInputBasedOnCombo(comboName, inputName) {
+    var comboBox = document.getElementsByName(comboName)[0]; // Get the first element with the given name
+    var inputField = document.getElementsByName(inputName)[0]; // Get the first element with the given name
+
+    if (comboBox && inputField) {
+        comboBox.addEventListener("change", function() {
+            if (comboBox.value === "خیر") {
+                inputField.disabled = true;  // Disable input field
+                inputField.value = "";       // Clear the input (optional)
+            } else {
+                inputField.disabled = false; // Enable input field
+            }
+        });
+    }
+}
+
 /**
  * Scrolls the page to the top smoothly.
  */
@@ -151,6 +167,12 @@ document.addEventListener("scroll", function () {
     }
 });
 
+
+
 document.addEventListener("DOMContentLoaded", function () {
     setupFormSubmission("myForm", "/submit-form");
+
+    toggleInputBasedOnCombo("special_care_companion", "companion_details");
+    toggleInputBasedOnCombo("driving_capability", "vehicle_details");
+
 });

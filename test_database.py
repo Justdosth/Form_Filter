@@ -1,7 +1,7 @@
 import json
 
 # Assuming you're fetching this from your database
-unicode_string = "\u0627\u0645\u0648\u0631 \u0622\u0645\u0648\u0632\u0634\u06cc"
+unicode_string = "\u0645\u0631\u0627\u0642\u0628\u062a \u0627\u0632 \u06a9\u0648\u062f\u06a9\u0627\u0646"
 
 def decode_unicode_string(s):
     try:

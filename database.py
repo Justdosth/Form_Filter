@@ -11,13 +11,15 @@ db = SQLAlchemy()
 
 class User(db.Model):
     # اطلاعات هویتی
+    national_code = db.Column(db.String(50), nullable=False, primary_key=True)
+
     full_name = db.Column(db.String(200), nullable=False)
     birth_date = db.Column(db.Date, nullable=False)
     birth_date_Persian = db.Column(db.String(10), nullable=False)
-    national_code = db.Column(db.String(50), nullable=False, primary_key=True)
+    
     language_proficiency = db.Column(db.String(200), nullable=True)
     gender = db.Column(db.String(10), nullable=False)  # "خانم" یا "آقا"
-    marital_status = db.Column(db.String(50), nullable=False)
+    marital_status = db.Column(db.String(10), nullable=False)
     special_care_companion = db.Column(db.String(10), nullable=True)  # "بله" یا "خیر"
     companion_details = db.Column(db.Text, nullable=True)
 

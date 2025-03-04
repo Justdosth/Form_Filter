@@ -1,8 +1,8 @@
 {
+  "کد ملی": "national_code",
   "نام و نام خانوادگی": "full_name",
   "تاریخ تولد": "birth_date",
   "birth_date_Persian": "birth_date_Persian",
-  "کد ملی": "national_code",
   "مهارت‌های زبانی": "language_proficiency",
   "جنسیت": "gender",
   "وضعیت تأهل": "marital_status",

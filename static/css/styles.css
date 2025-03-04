@@ -131,40 +131,66 @@ button:hover {
     border-color: red;
 }
 
-/* Table styling */
+textarea[disabled] {
+    background-color: #f0f0f08d; /* Light gray background */
+    color: #888; /* Gray text */
+    border: 1px solid #ccc; /* Light gray border */
+    cursor: not-allowed; /* Show disabled cursor */
+    opacity: 0.7; /* Reduce opacity */
+}
 
+
+/* Table styling */
 table {
     width: 100%;
     border-collapse: collapse;
-    table-layout: fixed;
+    table-layout: fixed; /* Forces the table to use fixed layout */
     border: 1px solid #ddd;
     text-align: center;
     font-size: small;
-}
-
-table {
-    width: 100%;
     overflow-x: auto;
     display: block;
-}
-/* Table header styling */
-thead {
-    background-color: #f4f4f4;
-}
-
-th, td {
-    padding: 8px;
-    border: 1px solid #ddd;
-    text-align: center;
 }
 
 tr:nth-child(even) {
     background-color: #f9f9f9;
 }
 
-/* tr:hover {
-    background-color: #f1f1f1;
-} */
+/* Table Container */
+.table-container {
+    max-height: 400px; /* You can adjust the height */
+    overflow-y: auto; /* Make the table scrollable */
+    display: flex;
+}
+
+/* Sticky Header Styling */
+.styled-table thead {
+    position: sticky;
+    top: 0;
+    background-color: #0056b3;
+    color: white;
+    z-index: 1;
+}
+
+/* Table Header and Cells Styling */
+.styled-table th, .styled-table td {
+    padding: 12px;
+    border: 1px solid #ddd;
+    text-align: center;
+    width: 16.66%; /* 100% / 6 columns = 16.66% for equal distribution */
+    word-wrap: break-word; /* To ensure long words wrap */
+}
+
+/* Adjust the last column (Actions) */
+table.styled-table th:last-child, table.styled-table td:last-child {
+    width: 16.66%; /* Adjust the width of the Actions column */
+}
+
+/* Optional: Fix horizontal overflow issue with sticky header */
+.styled-table th {
+    background-color: #0056b3;
+}
+
 
 /* Button styling */
 .btn-container {
@@ -286,37 +312,6 @@ footer {
 }
 
 
-/* Table Container */
-.table-container {
-    max-height: 400px; /* You can adjust the height */
-    overflow-y: auto; /* Make the table scrollable */
-    display: flex;
-}
-
-/* Table Styling */
-.styled-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-}
-
-/* Sticky Header Styling */
-.styled-table thead {
-    position: sticky;
-    top: 0;
-    background-color: #0056b3;
-    color: white;
-    z-index: 1;
-}
-
-/* Table Header and Cells Styling */
-.styled-table th,
-.styled-table td {
-    padding: 12px;
-    border: 1px solid #ddd;
-    text-align: center;
-}
-
 /* Custom Actions Buttons Styling */
 .custom-swal-button {
     background-color: #28a745;
@@ -360,11 +355,6 @@ footer {
     color: red;
     font-weight: bold;
     text-align: center;
-}
-
-.error-message {
-    color: darkred;
-    font-weight: bold;
 }
 
 

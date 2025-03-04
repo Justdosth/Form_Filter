@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, jsonify, url_for, flash
 from database import db, create_db, User, Acquaintance, Certificate, WorkExperience, generate_form_structure
+from database import SERVICES_LIST, EXTRA_SERVICES_LIST, LIMITATIONS_LIST, EQUIPMENT_EXPERIENCE_LIST
 from datetime import datetime
 from threading import Timer
 from waitress import serve
@@ -13,11 +14,18 @@ import sqlite3
 import json
 import os
 
+JSON_FIELDS_MAPPING = {
+    'services_offered': SERVICES_LIST,
+    'extra_services': EXTRA_SERVICES_LIST,
+    'limitations': LIMITATIONS_LIST,
+    'equipment_experience': EQUIPMENT_EXPERIENCE_LIST
+}
+
 def decode_unicode_string(s):
     try:
         # Check if the string has Unicode escape sequences
         if isinstance(s, str) and '\\u' in s:
-            return json.loads('"' + s + '"')
+            return json.loads(f'"{s}"')
         return s
     except json.JSONDecodeError:
         return s
@@ -75,7 +83,18 @@ def submit_form():
         for persian_key, english_key in persian_to_english_mapping.items():
             if english_key in user_columns:  # Only keep valid columns
                 value = request.form.get(english_key)
-                if english_key in ["special_care_companion", "driving_capability"]:
+                value = decode_unicode_string(value)
+                # Handle JSON Fields (Checkboxes to JSON format)
+                if english_key in JSON_FIELDS_MAPPING:
+                    # Get the predefined list for the field
+                    field_list = JSON_FIELDS_MAPPING[english_key]
+                    # Get list of selected values for this field
+                    selected_values = request.form.getlist(english_key)
+                    # Create JSON object mapping each service to 1 (selected) or 0 (unselected)
+                    json_data = {item: (1 if item in selected_values else 0) for item in field_list}
+                    user_data[english_key] = json_data
+
+                elif english_key in ["special_care_companion", "driving_capability"]:
                     user_data[english_key] = True if value == "on" else False
                 elif english_key == "birth_date" and value:
                     user_data["birth_date_Persian"] = value
@@ -111,9 +130,9 @@ def submit_form():
 
         # 5️⃣ Dynamically Collect Certificates
         certificates_data = zip(
-            request.form.getlist('مدارک_عنوان مدرک[]'),
-            request.form.getlist('مدارک_محل اخذ[]'),
-            request.form.getlist('مدارک_سال اخذ[]')
+            request.form.getlist('certificate_title[]'),
+            request.form.getlist('certificate_institution[]'),
+            request.form.getlist('certificate_year[]')
         )
 
         for title, institution, year in certificates_data:
@@ -123,14 +142,15 @@ def submit_form():
 
         # 6️⃣ Dynamically Collect Work Experience
         work_experience_data = zip(
-            request.form.getlist('سوابق کاری_نام شرکت (نام کارفرما)[]'),
-            request.form.getlist('سوابق کاری_شرح مسئولیت‌ها[]'),
-            request.form.getlist('سوابق کاری_علت قطع همکاری[]')
+            request.form.getlist('work_experience_company_name[]'),
+            request.form.getlist('work_experience_responsibilities[]'),
+            request.form.getlist('work_experience_reason_for_leaving[]'),
+            request.form.getlist('work_experience_company_contact[]'),
         )
 
-        for company_name, responsibilities, reason in work_experience_data:
+        for company_name, responsibilities, reason, contact in work_experience_data:
             if company_name:
-                work_exp = WorkExperience(user_id=user.national_code, work_experience_company_name=company_name, work_experience_responsibilities=responsibilities, work_experience_reason_for_leaving=reason)
+                work_exp = WorkExperience(user_id=user.national_code, work_experience_company_name=company_name, work_experience_responsibilities=responsibilities, work_experience_reason_for_leaving=reason, work_experience_company_contact=contact)
                 db.session.add(work_exp)
 
         # 7️⃣ Commit all data to the database
@@ -141,7 +161,7 @@ def submit_form():
         db.session.rollback()
         error_type = type(e).__name__  # Get the error type
         error_message = str(e)  # Get the actual error message
-        return jsonify({"success": False, "error_type": error_type, "message": error_message})
+        return jsonify({"success": False, "erroاخذ[]r_type": error_type, "message": error_message})
 
 @app.route('/view-data')
 def view_data():
@@ -158,12 +178,24 @@ def view_data():
     form_data_rows = cursor.fetchall()
 
     conn.close()
-    cell2 = "\u062a\u0628 \u0633\u0646\u062c"
-    # Example usage in the context of your rows
+
+    # Decode and process each row
     form_data_rows = [
-        [print(cell) for cell in row]
+        [decode_unicode_string(cell) if isinstance(cell, str) else cell for cell in row]
         for row in form_data_rows
     ]
+
+    # Process JSON fields (like services, limitations, etc.)
+    for row in form_data_rows:
+        for i, cell in enumerate(row):
+            if isinstance(cell, str) and cell.startswith('{') and cell.endswith('}'):  # Check if it's JSON
+                try:
+                    # Try to parse the JSON field
+                    json_data = json.loads(cell)
+                    # Convert it to a human-readable format (e.g., selected services)
+                    row[i] = ", ".join([key for key, value in json_data.items() if value == 1])
+                except Exception as e:
+                    row[i] = f"Invalid JSON: {e}"
 
     return render_template(
         'view_data.html',
