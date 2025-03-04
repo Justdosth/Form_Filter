@@ -203,57 +203,23 @@ def view_data():
         form_data_rows=form_data_rows
     )
 
-@app.route('/fetch_related_data/<data_type>/<user_id>', methods=['GET'])
-def fetch_related_data(data_type, user_id):
-    conn = sqlite3.connect('instance/form_data.db')
-    cursor = conn.cursor()
-
-    # Define table mapping
-    table_mapping = {
-        "acquaintances": "acquaintances",
-        "certificates": "certificates",
-        "work_experience": "work_experience"
-    }
-
-    table_name = table_mapping.get(data_type)
-
-    if not table_name:
-        conn.close()
-        return jsonify({"success": False, "message": "Invalid data type."}), 400
-
-    # Fetch data
-    cursor.execute(f"SELECT * FROM {table_name} WHERE user_id = ?", (user_id,))
-    related_data = cursor.fetchall()
-
-    conn.close()
-
-    if not related_data:
-        return jsonify({"success": True, "data": [], "message": "No related data found."})  # Return an empty array
-
-    # Convert data into a JSON-friendly format
-    column_names = [desc[0] for desc in cursor.description]
-    data_list = [dict(zip(column_names, row)) for row in related_data]
-
-    return jsonify({"success": True, "data": data_list})
-
 @app.route('/get_related_data')
 def get_related_data():
-    user_id = request.args.get('user_id')
-    table_name = request.args.get('table_name')
+    user_id = request.args.get('user_id')  # Get the user_id from query params
+    table_name = request.args.get('table_name').lower() # Get the table_name from query params
 
     if not user_id or not table_name:
         return jsonify({"error": "Missing parameters"}), 400
 
+    # Validate table_name against a list of allowed table names to avoid SQL injection
+    valid_tables = ["acquaintances", "certificates", "work_experience"]
+    if table_name not in valid_tables:
+        return jsonify({"error": "Invalid table name"}), 400
+
     conn = sqlite3.connect('instance/form_data.db')
     cursor = conn.cursor()
 
-    # Check if table exists before querying
-    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,))
-    if not cursor.fetchone():
-        conn.close()
-        return jsonify([])  # Return empty if table doesn't exist
-
-    # Fetch related data
+    # Fetch related data from the specified table
     cursor.execute(f"SELECT * FROM {table_name} WHERE user_id = ?", (user_id,))
     data = cursor.fetchall()
 
@@ -265,31 +231,8 @@ def get_related_data():
     # Convert to list of dictionaries
     results = [dict(zip(column_names, row)) for row in data]
 
-    return jsonify(results)
+    return jsonify(results)  # Return the fetched data as JSON
 
-@app.route("/get-acquaintances/<int:user_id>")
-def get_acquaintances(user_id):
-    acquaintances = Acquaintance.query.filter_by(user_id=user_id).all()
-    data = [acq.__dict__ for acq in acquaintances]
-    for record in data:
-        record.pop("_sa_instance_state", None)  # Remove SQLAlchemy internal metadata
-    return jsonify({"success": True, "records": data})
-
-@app.route("/get-certificates/<int:user_id>")
-def get_certificates(user_id):
-    certificates = Certificate.query.filter_by(user_id=user_id).all()
-    data = [cert.__dict__ for cert in certificates]
-    for record in data:
-        record.pop("_sa_instance_state", None)
-    return jsonify({"success": True, "records": data})
-
-@app.route("/get-work-experience/<int:user_id>")
-def get_work_experience(user_id):
-    work_experience = WorkExperience.query.filter_by(user_id=user_id).all()
-    data = [exp.__dict__ for exp in work_experience]
-    for record in data:
-        record.pop("_sa_instance_state", None)
-    return jsonify({"success": True, "records": data})
 
 def open_browser():
     webbrowser.open_new("http://127.0.0.1:2000/")

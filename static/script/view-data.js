@@ -3,9 +3,9 @@ document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".view-acquaintances, .view-certificates, .view-work-experience").forEach(button => {
         button.addEventListener("click", function () {
             const userId = this.getAttribute("data-user-id"); // Get user ID
-            const tableName = this.classList.contains("view-acquaintances") ? "Acquaintances" :
-                              this.classList.contains("view-certificates") ? "Certificates" :
-                              "WorkExperience"; // Choose table based on button clicked
+            const tableName = this.classList.contains("view-acquaintances") ? "acquaintance" :
+                              this.classList.contains("view-certificates") ? "certificate" :
+                              "work_exp"; // Choose table based on button clicked
             
             fetchRelatedData(userId, tableName); // Call function to fetch data
         });
