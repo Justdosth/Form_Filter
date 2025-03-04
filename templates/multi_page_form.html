@@ -33,7 +33,7 @@
                         <thead>
                             <tr>
                                 {% for field, _ in fields[0].items() %}
-                                    <th>{{ field }}</th>
+                                    <th id="{{ section }}-field" name="{{ persian_to_english_mapping.get(field, field) }}">{{ field }}</th>
                                 {% endfor %}
                                 <th>عملیات</th> <!-- To add a delete button for each row -->
                             </tr>
@@ -143,18 +143,18 @@
         // Function to add a new row to the table
         function addRow(section) {
             const table = document.getElementById(section + '-table').getElementsByTagName('tbody')[0];
+            const fields = document.querySelectorAll(`#${section}-field`);
             const row = table.insertRow(table.rows.length); // Add a new row at the end
             const formStructure = JSON.parse(`{{ form_structure | tojson | safe }}`);
-            const fields = formStructure[section]; // Get fields dynamically
-            console.log(fields)
+            
             let cell;
-
+        
             // Loop over each field in the section and create input elements
-            Object.keys(fields[0]).forEach(field => {
+            fields.forEach(field => {
                 cell = row.insertCell();
                 const input = document.createElement('input');
                 input.type = 'text';
-                input.name = `${section}_${field}[]`; // Name field with [] to collect multiple entries
+                input.name = `${field.getAttribute('name')}`; // Name field with [] to collect multiple entries
                 input.placeholder = "Enter data";
                 cell.appendChild(input);
             });

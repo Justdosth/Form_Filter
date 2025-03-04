@@ -164,7 +164,7 @@ tr:nth-child(even) {
 }
 
 /* Sticky Header Styling */
-.styled-table thead {
+thead {
     position: sticky;
     top: 0;
     background-color: #0056b3;
@@ -173,7 +173,7 @@ tr:nth-child(even) {
 }
 
 /* Table Header and Cells Styling */
-.styled-table th, .styled-table td {
+th, td {
     padding: 12px;
     border: 1px solid #ddd;
     text-align: center;
@@ -182,12 +182,12 @@ tr:nth-child(even) {
 }
 
 /* Adjust the last column (Actions) */
-table.styled-table th:last-child, table.styled-table td:last-child {
+th:last-child, td:last-child {
     width: 16.66%; /* Adjust the width of the Actions column */
 }
 
 /* Optional: Fix horizontal overflow issue with sticky header */
-.styled-table th {
+.th {
     background-color: #0056b3;
 }
 

@@ -27,11 +27,12 @@
   "نام و نام خانوادگی معرف": "acquaintances_name",
   "نسبت با شما": "acquaintances_relation",
   "آدرس محل سکونت فرد": "acquaintances_address",
-  "شماره تماس": "work_experience_company_contact",
+  "شماره تماس فرد": "acquaintances_contact",
   "عنوان مدرک": "certificate_title",
   "محل اخذ": "certificate_institution",
   "سال اخذ": "certificate_year",
   "نام شرکت (نام کارفرما)": "work_experience_company_name",
   "شرح مسئولیت‌ها": "work_experience_responsibilities",
-  "علت قطع همکاری": "work_experience_reason_for_leaving"
+  "علت قطع همکاری": "work_experience_reason_for_leaving",
+  "شماره تماس": "work_experience_company_contact"
 }

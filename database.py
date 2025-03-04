@@ -194,7 +194,7 @@ COLUMN_LABELS = {
     "acquaintances_name": "نام و نام خانوادگی معرف",
     "acquaintances_relation": "نسبت با شما",
     "acquaintances_address": "آدرس محل سکونت فرد",
-    "acquaintances_contact": "شماره تماس",
+    "acquaintances_contact": "شماره تماس فرد",
 
     "certificate_title": "عنوان مدرک",
     "certificate_institution": "محل اخذ",
@@ -297,8 +297,7 @@ def generate_form_structure():
         ("acquaintances_name", "نام و نام خانوادگی معرف"),
         ("acquaintances_relation", "نسبت با شما"),
         ("acquaintances_address", "آدرس محل سکونت فرد"),
-        ("acquaintances_contact", "شماره تماس"),
-
+        ("acquaintances_contact", "شماره تماس فرد"),
         ("certificate_title", "عنوان مدرک"),
         ("certificate_institution", "محل اخذ"),
         ("certificate_year", "سال اخذ"),

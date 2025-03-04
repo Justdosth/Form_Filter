@@ -75,7 +75,7 @@ def home():
 
 def submit_form():
     try:
-         # 1️⃣ Get Actual Columns from User Model
+        # 1️⃣ Get Actual Columns from User Model
         user_columns = list(inspect(User).c.keys())  # Get column names as a list
 
         # 2️⃣ Dynamically Collect User Data
@@ -93,7 +93,6 @@ def submit_form():
                     # Create JSON object mapping each service to 1 (selected) or 0 (unselected)
                     json_data = {item: (1 if item in selected_values else 0) for item in field_list}
                     user_data[english_key] = json_data
-
                 elif english_key in ["special_care_companion", "driving_capability"]:
                     user_data[english_key] = True if value == "on" else False
                 elif english_key == "birth_date" and value:
@@ -113,44 +112,65 @@ def submit_form():
 
         # 4️⃣ Dynamically Collect Acquaintances Data
         acquaintances_data = zip(
-            request.form.getlist('acquaintances_name[]'),
-            request.form.getlist('acquaintances_relation[]'),
-            request.form.getlist('acquaintances_address[]'),
-            request.form.getlist('work_experience_company_contact[]')
+            request.form.getlist('acquaintances_name'),
+            request.form.getlist('acquaintances_relation'),
+            request.form.getlist('acquaintances_address'),
+            request.form.getlist('acquaintances_contact')
         )
-        # Debugging: Print the extracted form data
-        print("Acquaintances Data Retrieved:")
-        for item in acquaintances_data:
-            print(item)
 
-        for name, relation, contact in acquaintances_data:
+        # Debugging: Print the extracted form data
+        print("Acquaintances Data Retrieved:", list(acquaintances_data))
+        # Debugging: Print the extracted form data
+        # Debugging list lengths
+        print("Length of acquaintances_name:", len(request.form.getlist('acquaintances_name')))
+        print("Length of acquaintances_relation:", len(request.form.getlist('acquaintances_relation')))
+        print("Length of acquaintances_address:", len(request.form.getlist('acquaintances_address')))
+        print("Length of work_experience_company_contact:", len(request.form.getlist('work_experience_company_contact')))
+
+        for name, relation, address, contact in acquaintances_data:
+            print(f"Processing acquaintance: {name}, {relation}, {address}, {contact}")
+            if name:  # Check if name is non-empty
+                acquaintance = Acquaintance(
+                    form_id=user.national_code,
+                    name=name,
+                    relation=relation,
+                    address=address,
+                    contact=contact
+                )
+                print("Adding acquaintance:", acquaintance)
+                db.session.add(acquaintance)
+
+        for name, relation, address, contact in acquaintances_data:
             if name:
-                acquaintance = Acquaintance(user_id=user.national_code, acquaintances_name=name, acquaintances_relation=relation, work_experience_company_contact=contact)
+                acquaintance = Acquaintance(form_id=user.national_code, name=name, relation=relation, address=address, contact=contact)
+                print("hiiiiiiiii")
                 db.session.add(acquaintance)
 
         # 5️⃣ Dynamically Collect Certificates
         certificates_data = zip(
-            request.form.getlist('certificate_title[]'),
-            request.form.getlist('certificate_institution[]'),
-            request.form.getlist('certificate_year[]')
+            request.form.getlist('certificate_title'),
+            request.form.getlist('certificate_institution'),
+            request.form.getlist('certificate_year')
         )
+        print("Certificates Data Retrieved:", list(certificates_data))
 
         for title, institution, year in certificates_data:
             if title:
-                certificate = Certificate(user_id=user.national_code, certificate_title=title, certificate_institution=institution, certificate_year=year)
+                certificate = Certificate(form_id=user.national_code, title=title, institution=institution, year=year)
                 db.session.add(certificate)
 
         # 6️⃣ Dynamically Collect Work Experience
         work_experience_data = zip(
-            request.form.getlist('work_experience_company_name[]'),
-            request.form.getlist('work_experience_responsibilities[]'),
-            request.form.getlist('work_experience_reason_for_leaving[]'),
-            request.form.getlist('work_experience_company_contact[]'),
+            request.form.getlist('work_experience_company_name'),
+            request.form.getlist('work_experience_responsibilities'),
+            request.form.getlist('work_experience_reason_for_leaving'),
+            request.form.getlist('work_experience_company_contact'),
         )
+        print("Work Experience Data Retrieved:", list(work_experience_data))
 
         for company_name, responsibilities, reason, contact in work_experience_data:
             if company_name:
-                work_exp = WorkExperience(user_id=user.national_code, work_experience_company_name=company_name, work_experience_responsibilities=responsibilities, work_experience_reason_for_leaving=reason, work_experience_company_contact=contact)
+                work_exp = WorkExperience(form_id=user.national_code, company_name=company_name, responsibilities=responsibilities, reason_for_leaving=reason, company_contact=contact)
                 db.session.add(work_exp)
 
         # 7️⃣ Commit all data to the database
@@ -161,7 +181,8 @@ def submit_form():
         db.session.rollback()
         error_type = type(e).__name__  # Get the error type
         error_message = str(e)  # Get the actual error message
-        return jsonify({"success": False, "erroاخذ[]r_type": error_type, "message": error_message})
+        print(f"Error: {error_message}")  # Print the error message for debugging
+        return jsonify({"success": False, "error_type": error_type, "message": error_message})
 
 @app.route('/view-data')
 def view_data():
@@ -206,13 +227,13 @@ def view_data():
 @app.route('/get_related_data')
 def get_related_data():
     user_id = request.args.get('user_id')  # Get the user_id from query params
-    table_name = request.args.get('table_name').lower() # Get the table_name from query params
+    table_name = request.args.get('table_name') # Get the table_name from query params
 
     if not user_id or not table_name:
         return jsonify({"error": "Missing parameters"}), 400
 
     # Validate table_name against a list of allowed table names to avoid SQL injection
-    valid_tables = ["acquaintances", "certificates", "work_experience"]
+    valid_tables = ["Acquaintance", "Certificate", "Work_experience"]
     if table_name not in valid_tables:
         return jsonify({"error": "Invalid table name"}), 400
 
@@ -220,7 +241,7 @@ def get_related_data():
     cursor = conn.cursor()
 
     # Fetch related data from the specified table
-    cursor.execute(f"SELECT * FROM {table_name} WHERE user_id = ?", (user_id,))
+    cursor.execute(f"SELECT * FROM {table_name} WHERE form_id = ?", (user_id,))
     data = cursor.fetchall()
 
     # Get column names
