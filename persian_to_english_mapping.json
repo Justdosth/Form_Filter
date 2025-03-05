@@ -3,6 +3,7 @@
   "نام و نام خانوادگی": "full_name",
   "تاریخ تولد": "birth_date",
   "birth_date_Persian": "birth_date_Persian",
+  "age": "age",
   "مهارت‌های زبانی": "language_proficiency",
   "جنسیت": "gender",
   "وضعیت تأهل": "marital_status",

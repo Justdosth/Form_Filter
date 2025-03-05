@@ -16,6 +16,7 @@ class User(db.Model):
     full_name = db.Column(db.String(200), nullable=False)
     birth_date = db.Column(db.Date, nullable=False)
     birth_date_Persian = db.Column(db.String(10), nullable=False)
+    age = db.Column(db.Integer, nullable=False)
     
     language_proficiency = db.Column(db.String(200), nullable=True)
     gender = db.Column(db.String(10), nullable=False)  # "خانم" یا "آقا"

@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const userId = this.getAttribute("data-user-id"); // Get user ID
             const tableName = this.classList.contains("view-acquaintances") ? "Acquaintance" :
                               this.classList.contains("view-certificates") ? "Certificate" :
-                              "WorkExperience"; // Choose table based on button clicked
+                              "Work_Experience"; // Choose table based on button clicked
             
             fetchRelatedData(userId, tableName); // Call function to fetch data
         });

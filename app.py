@@ -13,6 +13,8 @@ import webbrowser
 import sqlite3
 import json
 import os
+from datetime import datetime
+
 
 JSON_FIELDS_MAPPING = {
     'services_offered': SERVICES_LIST,
@@ -20,6 +22,13 @@ JSON_FIELDS_MAPPING = {
     'limitations': LIMITATIONS_LIST,
     'equipment_experience': EQUIPMENT_EXPERIENCE_LIST
 }
+
+def calculate_age(birthdate_str):
+    """Calculate age from a birthdate string (YYYY-MM-DD)."""
+    birthdate = datetime.strptime(birthdate_str, "%Y-%m-%d")
+    today = datetime.today()
+    age = int(today.year) - int(birthdate.year)
+    return age
 
 def decode_unicode_string(s):
     try:
@@ -98,11 +107,13 @@ def submit_form():
                 elif english_key == "birth_date" and value:
                     user_data["birth_date_Persian"] = value
                     converted_date = convert_persian_to_gregorian(value)  # Ensure this returns 'YYYY-MM-DD'
+                    age = calculate_age(converted_date)
+                    user_data["age"] = age
                     if isinstance(converted_date, str):  # Convert string to Python date object
                         user_data[english_key] = datetime.strptime(converted_date, "%Y-%m-%d").date()
                     else:
                         user_data[english_key] = converted_date  # If already a date, use as is
-                elif english_key != "birth_date_Persian":
+                elif english_key != "birth_date_Persian" and english_key != "age":
                     user_data[english_key] = value
 
         # 3️⃣ Create and Add User Object
@@ -117,42 +128,18 @@ def submit_form():
             request.form.getlist('acquaintances_address'),
             request.form.getlist('acquaintances_contact')
         ))
-
-        # Debugging: Print the extracted form data
-        print("Acquaintances Data Retrieved:", list(acquaintances_data))
-        # Debugging: Print the extracted form data
-        # Debugging list lengths
-        print("Length of acquaintances_name:", len(request.form.getlist('acquaintances_name')))
-        print("Length of acquaintances_relation:", len(request.form.getlist('acquaintances_relation')))
-        print("Length of acquaintances_address:", len(request.form.getlist('acquaintances_address')))
-        print("Length of acquaintances_contact:", len(request.form.getlist('acquaintances_contact')))
-
-        for name, relation, address, contact in list(acquaintances_data):
-            print(f"Processing acquaintance: {name}, {relation}, {address}, {contact}")
-            if name:  # Check if name is non-empty
-                acquaintance = Acquaintance(
-                    form_id=user.national_code,
-                    name=name,
-                    relation=relation,
-                    address=address,
-                    contact=contact
-                )
-                print("Adding acquaintance:", acquaintance)
-                db.session.add(acquaintance)
-
+        print(acquaintances_data)
         for name, relation, address, contact in acquaintances_data:
             if name:
                 acquaintance = Acquaintance(form_id=user.national_code, name=name, relation=relation, address=address, contact=contact)
-                print("hiiiiiiiii")
                 db.session.add(acquaintance)
 
         # 5️⃣ Dynamically Collect Certificates
-        certificates_data = zip(
+        certificates_data = list(zip(
             request.form.getlist('certificate_title'),
             request.form.getlist('certificate_institution'),
             request.form.getlist('certificate_year')
-        )
-        print("Certificates Data Retrieved:", list(certificates_data))
+        ))
 
         for title, institution, year in certificates_data:
             if title:
@@ -160,13 +147,12 @@ def submit_form():
                 db.session.add(certificate)
 
         # 6️⃣ Dynamically Collect Work Experience
-        work_experience_data = zip(
+        work_experience_data = list(zip(
             request.form.getlist('work_experience_company_name'),
             request.form.getlist('work_experience_responsibilities'),
             request.form.getlist('work_experience_reason_for_leaving'),
             request.form.getlist('work_experience_company_contact'),
-        )
-        print("Work Experience Data Retrieved:", list(work_experience_data))
+        ))
 
         for company_name, responsibilities, reason, contact in work_experience_data:
             if company_name:
@@ -233,7 +219,7 @@ def get_related_data():
         return jsonify({"error": "Missing parameters"}), 400
 
     # Validate table_name against a list of allowed table names to avoid SQL injection
-    valid_tables = ["Acquaintance", "Certificate", "Work_experience"]
+    valid_tables = ["Acquaintance", "Certificate", "Work_Experience"]
     if table_name not in valid_tables:
         return jsonify({"error": "Invalid table name"}), 400
 
