@@ -111,12 +111,12 @@ def submit_form():
         db.session.flush()  # Get user.id before inserting related records
 
         # 4️⃣ Dynamically Collect Acquaintances Data
-        acquaintances_data = zip(
+        acquaintances_data = list(zip(
             request.form.getlist('acquaintances_name'),
             request.form.getlist('acquaintances_relation'),
             request.form.getlist('acquaintances_address'),
             request.form.getlist('acquaintances_contact')
-        )
+        ))
 
         # Debugging: Print the extracted form data
         print("Acquaintances Data Retrieved:", list(acquaintances_data))
@@ -125,9 +125,9 @@ def submit_form():
         print("Length of acquaintances_name:", len(request.form.getlist('acquaintances_name')))
         print("Length of acquaintances_relation:", len(request.form.getlist('acquaintances_relation')))
         print("Length of acquaintances_address:", len(request.form.getlist('acquaintances_address')))
-        print("Length of work_experience_company_contact:", len(request.form.getlist('work_experience_company_contact')))
+        print("Length of acquaintances_contact:", len(request.form.getlist('acquaintances_contact')))
 
-        for name, relation, address, contact in acquaintances_data:
+        for name, relation, address, contact in list(acquaintances_data):
             print(f"Processing acquaintance: {name}, {relation}, {address}, {contact}")
             if name:  # Check if name is non-empty
                 acquaintance = Acquaintance(
