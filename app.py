@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, jsonify, url_for, flash
 from database import db, create_db, User, Acquaintance, Certificate, WorkExperience, generate_form_structure
-from database import SERVICES_LIST, EXTRA_SERVICES_LIST, LIMITATIONS_LIST, EQUIPMENT_EXPERIENCE_LIST
+from database import SERVICES_LIST, DRIVING_LIST, EXTRA_SERVICES_LIST, LIMITATIONS_LIST, EQUIPMENT_EXPERIENCE_LIST
 from datetime import datetime
 from threading import Timer
 from waitress import serve
@@ -20,7 +20,8 @@ JSON_FIELDS_MAPPING = {
     'services_offered': SERVICES_LIST,
     'extra_services': EXTRA_SERVICES_LIST,
     'limitations': LIMITATIONS_LIST,
-    'equipment_experience': EQUIPMENT_EXPERIENCE_LIST
+    'equipment_experience': EQUIPMENT_EXPERIENCE_LIST,
+    'driving_capability' : DRIVING_LIST
 }
 
 def calculate_age(birthdate_str):

@@ -35,7 +35,7 @@ class User(db.Model):
 
     # سایر خدمات
     extra_services = db.Column(JSON, nullable=True)
-    driving_capability = db.Column(db.String(10), nullable=True)  # "بله" یا "خیر"
+    driving_capability = db.Column(JSON, nullable=True)  # "بله" یا "خیر"
     vehicle_details = db.Column(db.Text, nullable=True)
 
     # محدودیت‌ها
@@ -117,7 +117,14 @@ SERVICES_LIST = [
     "مراقبت از بیماران",
     "مراقبت از معلولین"
 ]
-
+# توانایی رانندگی
+DRIVING_LIST = [
+    "ماشین",
+    "موتور",
+    "وانت",
+    "ماشین سنگین",
+    "هیچ کدام"
+]
 # محدودیت‌ها
 LIMITATIONS_LIST = [
     "پت",
@@ -181,7 +188,7 @@ COLUMN_LABELS = {
     "residence_address": "آدرس محل سکونت",
     "services_offered": "سرویس‌های قابل ارائه:",
     "extra_services": "خدمات اضافی:",
-    "driving_capability": "توانایی رانندگی",
+    "driving_capability": "توانایی رانندگی:",
     "vehicle_details": "جزئیات وسیله نقلیه",
     "limitations": "محدودیت‌ها:",
     "home_size_restriction": "محدودیت متراژ خانه",
@@ -263,9 +270,9 @@ def generate_form_structure():
             form_structure["سایر خدمات"][persian_label + "_options"] = EXTRA_SERVICES_LIST
 
         elif column_name in ['driving_capability']:
-            field_type = 'select'
+            field_type = 'checkboxes'
             form_structure["سرویس‌های قابل ارائه"][persian_label] = field_type
-            form_structure["سرویس‌های قابل ارائه"][persian_label + "_options"] = ["بله", "خیر"]
+            form_structure["سرویس‌های قابل ارائه"][persian_label + "_options"] = DRIVING_LIST
 
         elif column_name in ['vehicle_details']:
             field_type = 'textarea'
