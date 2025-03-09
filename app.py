@@ -21,7 +21,9 @@ JSON_FIELDS_MAPPING = {
     'extra_services': EXTRA_SERVICES_LIST,
     'limitations': LIMITATIONS_LIST,
     'equipment_experience': EQUIPMENT_EXPERIENCE_LIST,
-    'driving_capability' : DRIVING_LIST
+    'driving_capability' : DRIVING_LIST,
+    'gender' : ['خانم', 'آقا'],
+    'marital_status' : ['مجرد', 'متاهل']
 }
 
 def calculate_age(birthdate_str):
@@ -208,7 +210,8 @@ def view_data():
     return render_template(
         'view_data.html',
         column_names=column_names,  # Pass column names to the template
-        form_data_rows=form_data_rows
+        form_data_rows=form_data_rows,
+        JSON_FIELDS_MAPPING=JSON_FIELDS_MAPPING
     )
 
 @app.route('/get_related_data')

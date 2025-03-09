@@ -361,5 +361,33 @@ footer {
     text-align: center;
 }
 
+.filter-container {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Space between elements */
+    margin-bottom: 10px;
+    padding: 10px;
+}
 
+.multi-select {
+    width: 250px;
+    height: auto;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+    padding: 5px;
+}
 
+.search-box {
+    width: 200px;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.filter-container input, select{
+    /* margin: 0 10px; */
+    width: 100%;
+    max-width: 250px;
+    min-width: 250px;
+}
