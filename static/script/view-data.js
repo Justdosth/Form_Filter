@@ -188,7 +188,7 @@ function showDynamicFilterOptions() {
 //     }
 // }
 
-// Function to fetch filtered data from Flask
+// Function to fetch and display all related data based on the search term
 function filterTable() {
     const searchTerm = document.getElementById("tableFilter").value.trim();
     const selectedColumns = Array.from(document.getElementById("columnFilter").selectedOptions).map(option => option.value);
@@ -196,18 +196,13 @@ function filterTable() {
     const maxValue = document.getElementById("maxValue").value;
     const dynamicFilterValue = document.getElementById("dynamicFilter").value || '';
 
-    if (selectedColumns.length === 0) {
-        alert("Please select at least one column to search.");
-        return;
-    }
-
     // Construct the query string
     let queryParams = new URLSearchParams({
-        query: searchTerm,
+        query: searchTerm || '',  // Send empty string if no search term
         columns: JSON.stringify(selectedColumns), // Send as JSON string
-        min: minValue,
-        max: maxValue,
-        dynamicFilter: dynamicFilterValue
+        min: minValue || '', // Send empty if no min value
+        max: maxValue || '', // Send empty if no max value
+        dynamicFilter: dynamicFilterValue || ''  // Send empty if no dynamic filter value
     });
 
     // Fetch filtered data from Flask
@@ -217,10 +212,11 @@ function filterTable() {
             const tableBody = document.querySelector("#dataTable tbody");
             tableBody.innerHTML = ""; // Clear existing rows
 
+            // Loop through each row from the response
             data.forEach(row => {
                 let tableRow = "<tr>";
-                selectedColumns.forEach(col => {
-                    tableRow += `<td>${row[col] || ''}</td>`; // Show only selected columns
+                Object.values(row).forEach(value => {
+                    tableRow += `<td>${value || ''}</td>`; // Show all values in the row
                 });
                 tableRow += "</tr>";
                 tableBody.innerHTML += tableRow;
@@ -229,11 +225,15 @@ function filterTable() {
         .catch(error => console.error("Error fetching data:", error));
 }
 
-// Attach event listeners to filter inputs
-document.getElementById("tableFilter").addEventListener("keyup", filterTable);
-document.getElementById("columnFilter").addEventListener("change", filterTable);
-document.getElementById("minValue").addEventListener("input", filterTable);
-document.getElementById("maxValue").addEventListener("input", filterTable);
-document.getElementById("dynamicFilter").addEventListener("change", filterTable);
+
+// Attach event listener to the search button
+document.getElementById("searchBtn").addEventListener("click", filterTable);
+
+// Optional: Remove instant search event listeners
+// document.getElementById("tableFilter").removeEventListener("keyup", filterTable);
+// document.getElementById("columnFilter").removeEventListener("change", filterTable);
+// document.getElementById("minValue").removeEventListener("input", filterTable);
+// document.getElementById("maxValue").removeEventListener("input", filterTable);
+// document.getElementById("dynamicFilter").removeEventListener("change", filterTable);
 
 

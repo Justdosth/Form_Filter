@@ -16,7 +16,7 @@
         <!-- Multi-Select Column Filter -->
         <select id="columnFilter" multiple>
             {% for col_name in column_names %}
-                <option value="{{ col_name }}">{{ col_name }}</option>  <!-- Use actual column name -->
+                <option value="{{ col_name }}">{{ col_name }}</option>
             {% endfor %}
         </select>
         
@@ -33,7 +33,11 @@
                 <!-- Options will be dynamically added based on the column selection -->
             </select>
         </div>
+    
+        <!-- Search Button -->
+        <button id="searchBtn">Search</button>
     </div>
+    
     
     <div class="table-container">
         <table id="dataTable" class="styled-table">

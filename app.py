@@ -244,67 +244,88 @@ def get_related_data():
 
     return jsonify(results)  # Return the fetched data as JSON
 
-# Dummy function to simulate database search
-def search_database(query, selected_columns, min_value, max_value, dynamic_filter):
+@app.route('/search', methods=['GET'])
+def search_database():
+    # Get the parameters safely, providing default values to avoid undefined/None
+    query = request.args.get("query", "")
+    selected_columns = request.args.get("columns", "[]")
+    min_value = request.args.get("min", "")
+    max_value = request.args.get("max", "")
+    dynamic_filter = request.args.get("dynamicFilter", "")
+
+    # Make sure selected_columns is properly parsed (in case it's not a valid JSON string)
+    try:
+        selected_columns = json.loads(selected_columns) if selected_columns else []
+    except json.JSONDecodeError:
+        selected_columns = []
+
+    # If no query and no selected columns, render view_data (or redirect)
+    if not query and not selected_columns and not min_value and not max_value and not dynamic_filter:
+        # If no filters, show all data (same as view_data behavior)
+        return redirect(url_for('view_data'))
+
     conn = sqlite3.connect("instance/form_data.db")
     cursor = conn.cursor()
 
-    # Convert selected columns from JSON string to list
-    selected_columns = request.args.get("columns")
-    if selected_columns:
-        selected_columns = eval(selected_columns)  # Convert JSON string to list
-    else:
-        selected_columns = []  # Default empty list
+    # Fetch column names dynamically from the `user` table
+    cursor.execute("PRAGMA table_info(user)")  
+    all_columns = [col[1] for col in cursor.fetchall()]  
 
-    # Construct the SQL query dynamically
-    sql_query = f"SELECT {', '.join(selected_columns)} FROM your_table WHERE 1=1"
+    # Validate selected columns
+    if selected_columns:
+        selected_columns = [col for col in selected_columns if col in all_columns]
+    else:
+        selected_columns = all_columns  # Default to all columns if none selected
+
+    # Construct the SQL query
+    sql_query = f"SELECT {', '.join(all_columns)} FROM user WHERE 1=1"
     params = []
 
-    # Apply text search on selected columns
-    if query:
+    # 🔹 Apply search filter on selected columns (only if at least one column is selected)
+    if query and selected_columns:
         search_conditions = [f"{col} LIKE ?" for col in selected_columns]
         sql_query += f" AND ({' OR '.join(search_conditions)})"
         params.extend([f"%{query}%"] * len(selected_columns))
 
-    # Apply numeric range filter
+    # 🔹 Apply numeric range filter (replace `some_numeric_column` with the actual column name)
     if min_value:
-        sql_query += " AND some_numeric_column >= ?"
+        sql_query += " AND price >= ?"  # Replace `price` with the actual column
         params.append(min_value)
     if max_value:
-        sql_query += " AND some_numeric_column <= ?"
+        sql_query += " AND price <= ?"  # Replace `price` with the actual column
         params.append(max_value)
 
-    # Apply dynamic filter
+    # 🔹 Apply dynamic filter (if applicable)
     if dynamic_filter:
         sql_query += " AND some_dynamic_column LIKE ?"
         params.append(f"%{dynamic_filter}%")
+
+    print("Executing Query:", sql_query)  # Debugging
+    print("With Parameters:", params)  # Debugging
 
     cursor.execute(sql_query, params)
     results = cursor.fetchall()
     
     conn.close()
 
-    # Convert to dictionary format
-    data = [dict(zip(selected_columns, row)) for row in results]
-    return data
+    # Decode and process each row (like in view_data)
+    results = [
+        [decode_unicode_string(cell) if isinstance(cell, str) else cell for cell in row]
+        for row in results
+    ]
 
-@app.route('/search', methods=['GET'])
-def search():
-    query = request.args.get("query", "")
-    selected_columns = request.args.get("columns", "[]")
-    min_value = request.args.get("min", None)
-    max_value = request.args.get("max", None)
-    dynamic_filter = request.args.get("dynamicFilter", "")
+    # Process JSON fields (like services, limitations, etc.)
+    for row in results:
+        for i, cell in enumerate(row):
+            if isinstance(cell, str) and cell.startswith('{') and cell.endswith('}'):  # Check if it's JSON
+                try:
+                    json_data = json.loads(cell)
+                    row[i] = ", ".join([key for key, value in json_data.items() if value == 1])
+                except Exception as e:
+                    row[i] = f"Invalid JSON: {e}"
 
-    # Convert JSON string to list
-    selected_columns = eval(selected_columns)
+    return jsonify(results)  # Safely return the results as JSON
 
-    # Get filtered data
-    data = search_database(query, selected_columns, min_value, max_value, dynamic_filter)
-
-    return jsonify(data)
-def open_browser():
-    webbrowser.open_new("http://127.0.0.1:2000/")
 
 if __name__ == "__main__":
     app.run(debug=True, host="127.0.0.1", port=2000)
