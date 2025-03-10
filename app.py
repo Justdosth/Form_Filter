@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, jsonify, url_for, flash
-from database import db, create_db, User, Acquaintance, Certificate, WorkExperience, generate_form_structure
+from database import db, create_db, User, Acquaintance, Certificate, WorkExperience, generate_form_structure, User
 from database import SERVICES_LIST, DRIVING_LIST, EXTRA_SERVICES_LIST, LIMITATIONS_LIST, EQUIPMENT_EXPERIENCE_LIST
 from datetime import datetime
 from threading import Timer
@@ -244,7 +244,65 @@ def get_related_data():
 
     return jsonify(results)  # Return the fetched data as JSON
 
+# Dummy function to simulate database search
+def search_database(query, selected_columns, min_value, max_value, dynamic_filter):
+    conn = sqlite3.connect("instance/form_data.db")
+    cursor = conn.cursor()
 
+    # Convert selected columns from JSON string to list
+    selected_columns = request.args.get("columns")
+    if selected_columns:
+        selected_columns = eval(selected_columns)  # Convert JSON string to list
+    else:
+        selected_columns = []  # Default empty list
+
+    # Construct the SQL query dynamically
+    sql_query = f"SELECT {', '.join(selected_columns)} FROM your_table WHERE 1=1"
+    params = []
+
+    # Apply text search on selected columns
+    if query:
+        search_conditions = [f"{col} LIKE ?" for col in selected_columns]
+        sql_query += f" AND ({' OR '.join(search_conditions)})"
+        params.extend([f"%{query}%"] * len(selected_columns))
+
+    # Apply numeric range filter
+    if min_value:
+        sql_query += " AND some_numeric_column >= ?"
+        params.append(min_value)
+    if max_value:
+        sql_query += " AND some_numeric_column <= ?"
+        params.append(max_value)
+
+    # Apply dynamic filter
+    if dynamic_filter:
+        sql_query += " AND some_dynamic_column LIKE ?"
+        params.append(f"%{dynamic_filter}%")
+
+    cursor.execute(sql_query, params)
+    results = cursor.fetchall()
+    
+    conn.close()
+
+    # Convert to dictionary format
+    data = [dict(zip(selected_columns, row)) for row in results]
+    return data
+
+@app.route('/search', methods=['GET'])
+def search():
+    query = request.args.get("query", "")
+    selected_columns = request.args.get("columns", "[]")
+    min_value = request.args.get("min", None)
+    max_value = request.args.get("max", None)
+    dynamic_filter = request.args.get("dynamicFilter", "")
+
+    # Convert JSON string to list
+    selected_columns = eval(selected_columns)
+
+    # Get filtered data
+    data = search_database(query, selected_columns, min_value, max_value, dynamic_filter)
+
+    return jsonify(data)
 def open_browser():
     webbrowser.open_new("http://127.0.0.1:2000/")
 

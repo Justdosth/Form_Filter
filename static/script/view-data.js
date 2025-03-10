@@ -188,51 +188,52 @@ function showDynamicFilterOptions() {
 //     }
 // }
 
+// Function to fetch filtered data from Flask
 function filterTable() {
-    const searchTerm = normalizeText(document.getElementById('tableFilter').value);
-    const minValue = document.getElementById('minValue').value;
-    const maxValue = document.getElementById('maxValue').value;
-    const selectedColumns = Array.from(document.getElementById("columnFilter").selectedOptions).map(option => option.textContent.trim());
-    const dynamicFilterValue = document.getElementById('dynamicFilter') ? normalizeText(document.getElementById('dynamicFilter').value) : '';
-    // Filter rows based on search term, selected columns, range, and dynamic filter
-    const rows = document.querySelectorAll('#dataTable tbody tr');
-    
-    rows.forEach(row => {
-        let rowText = Array.from(row.cells).map(cell => normalizeText(cell.textContent.toLowerCase()));
-        let isMatch = true;
-        // 1. Check for text search in selected columns
-        if (selectedColumns.length > 0 & searchTerm) {
-            console.log(searchTerm);
-            isMatch = selectedColumns.some(colIndex => rowText[colIndex].includes(searchTerm));
-        }
+    const searchTerm = document.getElementById("tableFilter").value.trim();
+    const selectedColumns = Array.from(document.getElementById("columnFilter").selectedOptions).map(option => option.value);
+    const minValue = document.getElementById("minValue").value;
+    const maxValue = document.getElementById("maxValue").value;
+    const dynamicFilterValue = document.getElementById("dynamicFilter").value || '';
 
-        // 2. Apply range filter if any
-        if (minValue || maxValue) {
-            const numericDataCells = Array.from(row.cells).filter(cell => !isNaN(parseFloat(cell.textContent)));
-            if (numericDataCells.length) {
-                const cellValue = parseFloat(numericDataCells[0].textContent);
-                if ((minValue && cellValue < minValue) || (maxValue && cellValue > maxValue)) {
-                    isMatch = false;
-                }
-            }
-        }
+    if (selectedColumns.length === 0) {
+        alert("Please select at least one column to search.");
+        return;
+    }
 
-        // 3. Dynamic filter check
-        if (dynamicFilterValue) {
-            const dynamicColumnIndex = columnNames.indexOf(selectedColumns[0]); // Get correct column index
-            
-            if (dynamicColumnIndex !== -1) {  // ✅ Ensure the index is valid
-                const dynamicColumnValue = row.cells[dynamicColumnIndex]?.textContent?.trim() || ''; // ✅ Handle undefined cases safely
-                
-                if (!normalizeText(dynamicColumnValue).includes(dynamicFilterValue.toLowerCase())) {
-                    isMatch = false;
-                }
-            }
-        }
-
-
-        // Show or hide the row based on match
-        row.style.display = isMatch ? '' : 'none';
+    // Construct the query string
+    let queryParams = new URLSearchParams({
+        query: searchTerm,
+        columns: JSON.stringify(selectedColumns), // Send as JSON string
+        min: minValue,
+        max: maxValue,
+        dynamicFilter: dynamicFilterValue
     });
+
+    // Fetch filtered data from Flask
+    fetch(`/search?${queryParams}`)
+        .then(response => response.json())
+        .then(data => {
+            const tableBody = document.querySelector("#dataTable tbody");
+            tableBody.innerHTML = ""; // Clear existing rows
+
+            data.forEach(row => {
+                let tableRow = "<tr>";
+                selectedColumns.forEach(col => {
+                    tableRow += `<td>${row[col] || ''}</td>`; // Show only selected columns
+                });
+                tableRow += "</tr>";
+                tableBody.innerHTML += tableRow;
+            });
+        })
+        .catch(error => console.error("Error fetching data:", error));
 }
+
+// Attach event listeners to filter inputs
+document.getElementById("tableFilter").addEventListener("keyup", filterTable);
+document.getElementById("columnFilter").addEventListener("change", filterTable);
+document.getElementById("minValue").addEventListener("input", filterTable);
+document.getElementById("maxValue").addEventListener("input", filterTable);
+document.getElementById("dynamicFilter").addEventListener("change", filterTable);
+
 
