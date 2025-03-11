@@ -246,58 +246,58 @@ def get_related_data():
 
 @app.route('/search', methods=['GET'])
 def search_database():
-    # Get the parameters safely, providing default values to avoid undefined/None
+    # Check if the request is to clear filters
+    clear_filters = request.args.get("clear_filters", "false").lower() == "true"
+
+    if clear_filters:
+        return redirect(url_for('view_data'))  # Render the full dataset view
+
     query = request.args.get("query", "")
     selected_columns = request.args.get("columns", "[]")
     min_value = request.args.get("min", "")
     max_value = request.args.get("max", "")
     dynamic_filter = request.args.get("dynamicFilter", "")
 
-    # Make sure selected_columns is properly parsed (in case it's not a valid JSON string)
     try:
         selected_columns = json.loads(selected_columns) if selected_columns else []
     except json.JSONDecodeError:
         selected_columns = []
 
-    # If no query and no selected columns, render view_data (or redirect)
-    if not query and not selected_columns and not min_value and not max_value and not dynamic_filter:
-        # If no filters, show all data (same as view_data behavior)
-        return redirect(url_for('view_data'))
-
     conn = sqlite3.connect("instance/form_data.db")
     cursor = conn.cursor()
 
-    # Fetch column names dynamically from the `user` table
+    # Fetch column names dynamically
     cursor.execute("PRAGMA table_info(user)")  
     all_columns = [col[1] for col in cursor.fetchall()]  
 
-    # Validate selected columns
     if selected_columns:
         selected_columns = [col for col in selected_columns if col in all_columns]
     else:
         selected_columns = all_columns  # Default to all columns if none selected
 
-    # Construct the SQL query
     sql_query = f"SELECT {', '.join(all_columns)} FROM user WHERE 1=1"
     params = []
 
-    # 🔹 Apply search filter on selected columns (only if at least one column is selected)
     if query and selected_columns:
         search_conditions = [f"{col} LIKE ?" for col in selected_columns]
         sql_query += f" AND ({' OR '.join(search_conditions)})"
         params.extend([f"%{query}%"] * len(selected_columns))
 
-    # 🔹 Apply numeric range filter (replace `some_numeric_column` with the actual column name)
-    if min_value:
-        sql_query += " AND price >= ?"  # Replace `price` with the actual column
-        params.append(min_value)
-    if max_value:
-        sql_query += " AND price <= ?"  # Replace `price` with the actual column
-        params.append(max_value)
+    # Apply filtering based on dynamically selected numeric columns
+    if min_value and selected_columns:
+        for column in selected_columns:
+            min_column = column  # Assume first selected column is numeric
+            sql_query += f" AND {min_column} >= ?"
+            params.append(min_value)
 
-    # 🔹 Apply dynamic filter (if applicable)
-    if dynamic_filter:
-        sql_query += " AND some_dynamic_column LIKE ?"
+    if max_value and selected_columns:
+        for column in selected_columns:
+            max_column = column  # Assume first selected column is numeric
+            sql_query += f" AND {max_column} <= ?"
+            params.append(max_value)
+
+    if dynamic_filter and selected_columns:
+        sql_query += f" AND {selected_columns[0]} LIKE ?"
         params.append(f"%{dynamic_filter}%")
 
     print("Executing Query:", sql_query)  # Debugging
@@ -305,10 +305,8 @@ def search_database():
 
     cursor.execute(sql_query, params)
     results = cursor.fetchall()
-    
     conn.close()
 
-    # Decode and process each row (like in view_data)
     results = [
         [decode_unicode_string(cell) if isinstance(cell, str) else cell for cell in row]
         for row in results
@@ -324,8 +322,9 @@ def search_database():
                 except Exception as e:
                     row[i] = f"Invalid JSON: {e}"
 
-    return jsonify(results)  # Safely return the results as JSON
-
+    return jsonify(results)
 
 if __name__ == "__main__":
     app.run(debug=True, host="127.0.0.1", port=2000)
+
+

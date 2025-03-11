@@ -151,89 +151,80 @@ function showDynamicFilterOptions() {
     dynamicFilterContainer.style.display = hasDynamicFilter ? 'block' : 'none';
 }
 
-// function filterTable() {
-//     let input = normalizeText(document.getElementById("tableFilter").value);
-//     let minValue = document.getElementById("minValue").value;
-//     let maxValue = document.getElementById("maxValue").value;
-//     let table = document.getElementById("dataTable");
-//     let rows = table.getElementsByTagName("tr");
-//     let selectedColumns = Array.from(document.getElementById("columnFilter").selectedOptions).map(opt => parseInt(opt.value));
+function filterTable(clearFilters = false) {
+    // If clearing filters, reset table and return
+    if (clearFilters) {
+        window.location.href = "/view-data";  // Redirect to view-data when clearing filters
+        return;
+    }
 
-//     for (let i = 1; i < rows.length; i++) { // Start from 1 to skip the header
-//         let cells = rows[i].getElementsByTagName("td");
-//         let rowContainsFilter = false;
+    // let raw_query = document.getElementById("tableFilter").value.trim();
+    // let query = encodeURIComponent(raw_query);
 
-//         for (let colIndex of selectedColumns) {
-//             let cellText = normalizeText(cells[colIndex]?.textContent);
+    let query = document.getElementById("tableFilter").value.trim();
 
-//             // If a range is applied
-//             if (minValue || maxValue) {
-//                 let cellValue = parseFloat(cellText);
-//                 let minCheck = minValue === "" || (cellValue && cellValue >= parseFloat(minValue));
-//                 let maxCheck = maxValue === "" || (cellValue && cellValue <= parseFloat(maxValue));
+    let selectedColumns = Array.from(document.getElementById("columnFilter").selectedOptions).map(option => option.value);
+    let minValue = document.getElementById("minValue").value;
+    let maxValue = document.getElementById("maxValue").value;
+    let dynamicFilter = document.getElementById("dynamicFilter").value;
 
-//                 if (minCheck && maxCheck) {
-//                     rowContainsFilter = true;
-//                     break;
-//                 }
-//             }
-//             // Normal text search
-//             else if (cellText.includes(input)) {
-//                 rowContainsFilter = true;
-//                 break;
-//             }
-//         }
+    // Construct query parameters
+    let params = new URLSearchParams();
+    if (query) params.append("query", query);
+    if (selectedColumns.length > 0) params.append("columns", JSON.stringify(selectedColumns));
+    if (minValue) params.append("min", minValue);
+    if (maxValue) params.append("max", maxValue);
+    if (dynamicFilter) params.append("dynamicFilter", dynamicFilter);
 
-//         rows[i].style.display = rowContainsFilter ? "" : "none";
-//     }
-// }
-
-// Function to fetch and display all related data based on the search term
-function filterTable() {
-    const searchTerm = document.getElementById("tableFilter").value.trim();
-    const selectedColumns = Array.from(document.getElementById("columnFilter").selectedOptions).map(option => option.value);
-    const minValue = document.getElementById("minValue").value;
-    const maxValue = document.getElementById("maxValue").value;
-    const dynamicFilterValue = document.getElementById("dynamicFilter").value || '';
-
-    // Construct the query string
-    let queryParams = new URLSearchParams({
-        query: searchTerm || '',  // Send empty string if no search term
-        columns: JSON.stringify(selectedColumns), // Send as JSON string
-        min: minValue || '', // Send empty if no min value
-        max: maxValue || '', // Send empty if no max value
-        dynamicFilter: dynamicFilterValue || ''  // Send empty if no dynamic filter value
-    });
-
-    // Fetch filtered data from Flask
-    fetch(`/search?${queryParams}`)
+    // Fetch filtered data
+    fetch(`/search?${params.toString()}`)
         .then(response => response.json())
         .then(data => {
-            const tableBody = document.querySelector("#dataTable tbody");
-            tableBody.innerHTML = ""; // Clear existing rows
-
-            // Loop through each row from the response
-            data.forEach(row => {
-                let tableRow = "<tr>";
-                Object.values(row).forEach(value => {
-                    tableRow += `<td>${value || ''}</td>`; // Show all values in the row
-                });
-                tableRow += "</tr>";
-                tableBody.innerHTML += tableRow;
-            });
+            displayTableData(data);
         })
-        .catch(error => console.error("Error fetching data:", error));
+        .catch(error => {
+            console.error("Error fetching filtered data:", error);
+        });
 }
 
-
-// Attach event listener to the search button
-document.getElementById("searchBtn").addEventListener("click", filterTable);
-
-// Optional: Remove instant search event listeners
-// document.getElementById("tableFilter").removeEventListener("keyup", filterTable);
-// document.getElementById("columnFilter").removeEventListener("change", filterTable);
-// document.getElementById("minValue").removeEventListener("input", filterTable);
-// document.getElementById("maxValue").removeEventListener("input", filterTable);
-// document.getElementById("dynamicFilter").removeEventListener("change", filterTable);
+// Attach event listeners
+document.getElementById("searchButton").addEventListener("click", () => filterTable(false));
+document.getElementById("clearFiltersButton").addEventListener("click", () => filterTable(true));
 
 
+// Function to display filtered table data
+function displayTableData(data) {
+    let tableBody = document.getElementById("tableBody");
+    tableBody.innerHTML = ""; // Clear existing rows
+
+    data.forEach(row => {
+        let rowHtml = `<tr>`;
+        row.forEach(cell => {
+            rowHtml += `<td>${cell}</td>`;
+        });
+
+        // Add buttons for related tables
+        rowHtml += `
+            <td>
+                <button class="custom-swal-button view-acquaintances" data-user-id="${row[0]}">Acquaintances</button>
+                <button class="custom-swal-button view-certificates" data-user-id="${row[0]}">Certificates</button>
+                <button class="custom-swal-button view-work-experience" data-user-id="${row[0]}">Experience</button>
+            </td>
+        `;
+
+        rowHtml += `</tr>`;
+        tableBody.innerHTML += rowHtml;
+    });
+
+    // Reattach event listeners for buttons
+    document.querySelectorAll(".view-acquaintances, .view-certificates, .view-work-experience").forEach(button => {
+        button.addEventListener("click", function () {
+            let userId = this.getAttribute("data-user-id");
+            let tableName = this.classList.contains("view-acquaintances") ? "Acquaintance" :
+                            this.classList.contains("view-certificates") ? "Certificate" :
+                            "Work_Experience";
+
+            fetchRelatedData(userId, tableName);
+        });
+    });
+}
