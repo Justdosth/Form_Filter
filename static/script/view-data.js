@@ -15,6 +15,14 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
+    // Attach event listeners for delete buttons
+    document.querySelectorAll(".custom-delete-button").forEach(button => {
+        button.addEventListener("click", function () {
+            const userId = this.getAttribute("data-user-id"); 
+            deleteUser(userId);
+        });
+    });
+
     const columnFilter = document.getElementById("columnFilter");
 
     // Enable multi-select behavior
@@ -192,39 +200,75 @@ document.getElementById("searchButton").addEventListener("click", () => filterTa
 document.getElementById("clearFiltersButton").addEventListener("click", () => filterTable(true));
 
 
-// Function to display filtered table data
 function displayTableData(data) {
-    let tableBody = document.getElementById("tableBody");
-    tableBody.innerHTML = ""; // Clear existing rows
+    const tableBody = document.getElementById("tableBody");
+    tableBody.innerHTML = ""; // Clear existing table data
 
+    if (!data || data.length === 0) {
+        tableBody.innerHTML = "<tr><td colspan='100%'>No data found.</td></tr>";
+        return;
+    }
+
+    // Generate table rows dynamically
     data.forEach(row => {
         let rowHtml = `<tr>`;
         row.forEach(cell => {
             rowHtml += `<td>${cell}</td>`;
         });
 
-        // Add buttons for related tables
+        // Get user_id (assuming it's the first column, adjust if needed)
+        let userId = row[0];
+
+        // Add Action buttons (View + Delete)
         rowHtml += `
             <td>
-                <button class="custom-swal-button view-acquaintances" data-user-id="${row[0]}">Acquaintances</button>
-                <button class="custom-swal-button view-certificates" data-user-id="${row[0]}">Certificates</button>
-                <button class="custom-swal-button view-work-experience" data-user-id="${row[0]}">Experience</button>
+                <button class="custom-swal-button view-acquaintances" data-user-id="${userId}">Acquaintances</button>
+                <button class="custom-swal-button view-certificates" data-user-id="${userId}">Certificates</button>
+                <button class="custom-swal-button view-work-experience" data-user-id="${userId}">Experience</button>
+                <button class="custom-delete-button" data-user-id="${userId}">Delete</button>
             </td>
         `;
 
         rowHtml += `</tr>`;
         tableBody.innerHTML += rowHtml;
     });
-
-    // Reattach event listeners for buttons
+    
+    // Selecting all buttons dynamically
     document.querySelectorAll(".view-acquaintances, .view-certificates, .view-work-experience").forEach(button => {
         button.addEventListener("click", function () {
-            let userId = this.getAttribute("data-user-id");
-            let tableName = this.classList.contains("view-acquaintances") ? "Acquaintance" :
-                            this.classList.contains("view-certificates") ? "Certificate" :
-                            "Work_Experience";
-
-            fetchRelatedData(userId, tableName);
+            const userId = this.getAttribute("data-user-id"); // Get user ID
+            const tableName = this.classList.contains("view-acquaintances") ? "Acquaintance" :
+                              this.classList.contains("view-certificates") ? "Certificate" :
+                              "Work_Experience"; // Choose table based on button clicked
+            
+            fetchRelatedData(userId, tableName); // Call function to fetch data
         });
     });
+    // Attach event listeners for delete buttons
+    document.querySelectorAll(".custom-delete-button").forEach(button => {
+        button.addEventListener("click", function () {
+            const userId = this.getAttribute("data-user-id"); 
+            deleteUser(userId);
+        });
+    });
+}
+
+/**
+ * Sends a delete request to the backend to remove a user and their related data.
+ * @param {string} userId - The ID of the user to delete.
+ */
+function deleteUser(userId) {
+    if (!confirm("Are you sure you want to delete this user and all related data?")) return;
+
+    fetch(`/delete_user?user_id=${userId}`, { method: "DELETE" })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert("User deleted successfully.");
+                filterTable(false); // Refresh the table
+            } else {
+                alert("Error deleting user: " + data.error);
+            }
+        })
+        .catch(error => console.error("Error:", error));
 }

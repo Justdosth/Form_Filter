@@ -33,14 +33,15 @@ def calculate_age(birthdate_str):
     age = int(today.year) - int(birthdate.year)
     return age
 
+
 def decode_unicode_string(s):
     try:
-        # Check if the string has Unicode escape sequences
-        if isinstance(s, str) and '\\u' in s:
-            return json.loads(f'"{s}"')
-        return s
+        # Ensure it's a string and contains Unicode escape sequences
+        if isinstance(s, str) and ('\\u' in s or '\\\\u' in s):
+            return json.loads(f'{s}')  # Decode the escaped Unicode string
+        return s  # Return as is if no escaping detected
     except json.JSONDecodeError:
-        return s
+        return s  # Return original string if decoding fails
 
 def convert_persian_to_gregorian(persian_date):
     """
@@ -95,7 +96,8 @@ def submit_form():
         for persian_key, english_key in persian_to_english_mapping.items():
             if english_key in user_columns:  # Only keep valid columns
                 value = request.form.get(english_key)
-                value = decode_unicode_string(value)
+                # value = decode_unicode_string(value)  # Decode any Unicode sequences
+
                 # Handle JSON Fields (Checkboxes to JSON format)
                 if english_key in JSON_FIELDS_MAPPING:
                     # Get the predefined list for the field
@@ -104,9 +106,15 @@ def submit_form():
                     selected_values = request.form.getlist(english_key)
                     # Create JSON object mapping each service to 1 (selected) or 0 (unselected)
                     json_data = {item: (1 if item in selected_values else 0) for item in field_list}
-                    user_data[english_key] = json_data
+                    # 🔥 Convert to JSON string before storing in the database (without escaping Unicode)
+                    user_data[english_key] = json.dumps(json_data, ensure_ascii=False)
+                    print(user_data[english_key])
+                
+                # Handle Boolean Fields (special_care_companion, driving_capability)
                 elif english_key in ["special_care_companion", "driving_capability"]:
                     user_data[english_key] = True if value == "on" else False
+                
+                # Handle Birth Date (persian to gregorian and age calculation)
                 elif english_key == "birth_date" and value:
                     user_data["birth_date_Persian"] = value
                     converted_date = convert_persian_to_gregorian(value)  # Ensure this returns 'YYYY-MM-DD'
@@ -116,8 +124,11 @@ def submit_form():
                         user_data[english_key] = datetime.strptime(converted_date, "%Y-%m-%d").date()
                     else:
                         user_data[english_key] = converted_date  # If already a date, use as is
+                
+                # Handle other fields that are neither JSON nor Boolean
                 elif english_key != "birth_date_Persian" and english_key != "age":
                     user_data[english_key] = value
+
 
         # 3️⃣ Create and Add User Object
         user = User(**user_data)  # Ensure only valid columns are passed
@@ -131,7 +142,7 @@ def submit_form():
             request.form.getlist('acquaintances_address'),
             request.form.getlist('acquaintances_contact')
         ))
-        print(acquaintances_data)
+        # print(acquaintances_data)
         for name, relation, address, contact in acquaintances_data:
             if name:
                 acquaintance = Acquaintance(form_id=user.national_code, name=name, relation=relation, address=address, contact=contact)
@@ -200,6 +211,7 @@ def view_data():
         for i, cell in enumerate(row):
             if isinstance(cell, str) and cell.startswith('{') and cell.endswith('}'):  # Check if it's JSON
                 try:
+                    # row = list(row)
                     # Try to parse the JSON field
                     json_data = json.loads(cell)
                     # Convert it to a human-readable format (e.g., selected services)
@@ -297,8 +309,16 @@ def search_database():
             params.append(max_value)
 
     if dynamic_filter and selected_columns:
-        sql_query += f" AND {selected_columns[0]} LIKE ?"
-        params.append(f"%{dynamic_filter}%")
+        # Create a list of conditions for each selected column
+        conditions = []
+        for column in selected_columns:
+            conditions.append(f"{column} LIKE ?")
+        
+        # Join all conditions with "OR" (to match any column)
+        sql_query += " AND (" + " OR ".join(conditions) + ")"
+        
+        # Append the filter value for each condition
+        params.extend([f"%{dynamic_filter}%"] * len(selected_columns))
 
     print("Executing Query:", sql_query)  # Debugging
     print("With Parameters:", params)  # Debugging
@@ -312,6 +332,8 @@ def search_database():
         for row in results
     ]
 
+    print(results)
+
     # Process JSON fields (like services, limitations, etc.)
     for row in results:
         for i, cell in enumerate(row):
@@ -321,8 +343,37 @@ def search_database():
                     row[i] = ", ".join([key for key, value in json_data.items() if value == 1])
                 except Exception as e:
                     row[i] = f"Invalid JSON: {e}"
-
+    
     return jsonify(results)
+
+@app.route('/delete_user', methods=['DELETE'])
+def delete_user():
+    user_id = request.args.get('user_id')
+
+    if not user_id:
+        return jsonify({"error": "Missing user_id"}), 400
+
+    conn = sqlite3.connect("instance/form_data.db")
+    cursor = conn.cursor()
+
+    try:
+        # Define related tables to delete user data
+        related_tables = ["Acquaintance", "Certificate", "Work_Experience"]
+
+        for table in related_tables:
+            cursor.execute(f"DELETE FROM {table} WHERE form_id = ?", (user_id,))
+
+        # Delete from the main user table
+        cursor.execute("DELETE FROM user WHERE national_code = ?", (user_id,))
+        
+        conn.commit()
+        conn.close()
+        return jsonify({"success": True})
+
+    except Exception as e:
+        conn.rollback()
+        conn.close()
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug=True, host="127.0.0.1", port=2000)
