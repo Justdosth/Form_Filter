@@ -312,7 +312,8 @@ def search_database():
         # Create a list of conditions for each selected column
         conditions = []
         for column in selected_columns:
-            conditions.append(f"{column} LIKE ?")
+            search_format = column + "->>" + "?" + "=1"
+            conditions.append(search_format)
         
         # Join all conditions with "OR" (to match any column)
         sql_query += " AND (" + " OR ".join(conditions) + ")"
